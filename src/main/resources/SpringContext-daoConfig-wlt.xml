@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+						http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+						http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd">
+
+		<bean id="cWVWltAccessLogMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface" value="org.brewchain.cwv.wlt.dbgens.wlt.mapper.CWVWltAccessLogMapper" />
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+	 <bean id="cwvwltaccesslogDao" class="org.brewchain.cwv.wlt.dbgens.wlt.dao.CWVWltAccessLogDao" >
+ 		<property name="mapper" ref="cWVWltAccessLogMapper" />
+ 		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+ 	</bean>
+	<bean id="cWVWltAddrMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface" value="org.brewchain.cwv.wlt.dbgens.wlt.mapper.CWVWltAddrMapper" />
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+	 <bean id="cwvwltaddrDao" class="org.brewchain.cwv.wlt.dbgens.wlt.dao.CWVWltAddrDao" >
+ 		<property name="mapper" ref="cWVWltAddrMapper" />
+ 		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+ 	</bean>
+	<bean id="cWVWltAssetMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface" value="org.brewchain.cwv.wlt.dbgens.wlt.mapper.CWVWltAssetMapper" />
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+	 <bean id="cwvwltassetDao" class="org.brewchain.cwv.wlt.dbgens.wlt.dao.CWVWltAssetDao" >
+ 		<property name="mapper" ref="cWVWltAssetMapper" />
+ 		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+ 	</bean>
+	<bean id="cWVWltCertOrgMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface" value="org.brewchain.cwv.wlt.dbgens.wlt.mapper.CWVWltCertOrgMapper" />
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+	 <bean id="cwvwltcertorgDao" class="org.brewchain.cwv.wlt.dbgens.wlt.dao.CWVWltCertOrgDao" >
+ 		<property name="mapper" ref="cWVWltCertOrgMapper" />
+ 		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+ 	</bean>
+	<bean id="cWVWltCertPerMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface" value="org.brewchain.cwv.wlt.dbgens.wlt.mapper.CWVWltCertPerMapper" />
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+	 <bean id="cwvwltcertperDao" class="org.brewchain.cwv.wlt.dbgens.wlt.dao.CWVWltCertPerDao" >
+ 		<property name="mapper" ref="cWVWltCertPerMapper" />
+ 		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+ 	</bean>
+	<bean id="cWVWltFileMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface" value="org.brewchain.cwv.wlt.dbgens.wlt.mapper.CWVWltFileMapper" />
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+	 <bean id="cwvwltfileDao" class="org.brewchain.cwv.wlt.dbgens.wlt.dao.CWVWltFileDao" >
+ 		<property name="mapper" ref="cWVWltFileMapper" />
+ 		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+ 	</bean>
+	<bean id="cWVWltFundMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface" value="org.brewchain.cwv.wlt.dbgens.wlt.mapper.CWVWltFundMapper" />
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+	 <bean id="cwvwltfundDao" class="org.brewchain.cwv.wlt.dbgens.wlt.dao.CWVWltFundDao" >
+ 		<property name="mapper" ref="cWVWltFundMapper" />
+ 		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+ 	</bean>
+	<bean id="cWVWltPendMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface" value="org.brewchain.cwv.wlt.dbgens.wlt.mapper.CWVWltPendMapper" />
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+	 <bean id="cwvwltpendDao" class="org.brewchain.cwv.wlt.dbgens.wlt.dao.CWVWltPendDao" >
+ 		<property name="mapper" ref="cWVWltPendMapper" />
+ 		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+ 	</bean>
+	<bean id="cWVWltTransferMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface" value="org.brewchain.cwv.wlt.dbgens.wlt.mapper.CWVWltTransferMapper" />
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+	 <bean id="cwvwlttransferDao" class="org.brewchain.cwv.wlt.dbgens.wlt.dao.CWVWltTransferDao" >
+ 		<property name="mapper" ref="cWVWltTransferMapper" />
+ 		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+ 	</bean>
+	<bean id="cWVWltUserMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface" value="org.brewchain.cwv.wlt.dbgens.wlt.mapper.CWVWltUserMapper" />
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+	 <bean id="cwvwltuserDao" class="org.brewchain.cwv.wlt.dbgens.wlt.dao.CWVWltUserDao" >
+ 		<property name="mapper" ref="cWVWltUserMapper" />
+ 		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+ 	</bean>
+	<bean id="cWVBcWwwUserMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="mapperInterface" value="org.brewchain.cwv.wlt.dbgens.bc.mapper.CWVBcWwwUserMapper" />
+		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+	 <bean id="cwvbcwwwuserDao" class="org.brewchain.cwv.wlt.dbgens.bc.dao.CWVBcWwwUserDao" >
+ 		<property name="mapper" ref="cWVBcWwwUserMapper" />
+ 		<property name="sqlSessionFactory" ref="sqlSessionFactory" />
+ 	</bean>
+	
+</beans>

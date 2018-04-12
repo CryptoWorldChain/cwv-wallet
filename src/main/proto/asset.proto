@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package org.fc.wlt.gens;
+
+enum PASTModule {
+	 AST = 0;	 
+};
+
+enum PASTCommand {
+	NUA = 0;//新增用户地址
+	ONA = 2; //组织发行资产，组织认证审核通过的用户可发行自己的资产
+};
+
+message PMFullAddress {
+	string hexAddr = 1;//地址
+	string pki = 2;//私钥
+	string alias = 4;//地址别名
+	string rpmdHash = 5;//公钥匙hash
+};
+
+message PMSignAddress {
+	string hexAddr = 1;//地址
+	string alias = 4;//地址别名
+	string rpmdHash = 5;//公钥匙hash
+};
+
+message PMUserAddress {//用户地址
+	string hexAddr = 1;//用户地址
+	string pki = 2;//私钥
+	string pub = 3;//公钥
+	string pubHash = 4;//公钥匙hash
+	string userCode = 5;//用户代码
+	PMAssetInfo asset = 6;//认证审核通过后，自动创建一个FBS资产（赠送一定数量的FBS）
+	int64 dateTime = 7;//创建时间戳
+	string status = 8;//地址状态
+	string addrId = 9;//地址ID
+};
+message PMAssetInfo {//资产信息
+	PMFullAddress address = 1;//资产地址（查询资产返回时注意不返回用户的‘私钥’，这样的地址信息就是 PMSignAddress）
+	string alias = 6;//资产别名
+	string dataTable = 7;//资产检索条件
+	string dmtEname = 8;//英文名称,如：FBS
+	string dmtCname = 9;//中文名称,如：泛融币
+	double holdCount = 10;//持有量
+	string metadata = 11 [jstype = JS_NORMAL];//扩展信息
+	PMFundInfo fund = 12;//金融信息
+	int64 dateTime = 15;//创建时间戳
+};
+message PMFundInfo{//金融信息
+	string dmtEname = 2;//货币英文名称
+	string dmtCname = 3;//货币中文名称
+	double genisDeposit = 7;//创始保证金
+	double totalCount = 8;//总发行数量
+	double turnoverCount = 11;//流通数量
+	int64 dateTime = 12;//货币发行时间戳
+};
+
+//######新增用户地址接口请求
+message PSNewUserAddress {
+	string userCode = 1;//用户代码
+	string requestNo = 79;//接口请求唯一序号
+};
+//######新增用户地址接口请求
+message PRetNewUserAddress {
+	string errCode = 1;//返回码
+	string msg = 2; //描述信息
+	PMUserAddress ua = 3;//用户地址
+	//double totalFee = 4 ;//手续费，新增用户地址系统所收取的FBS
+	string requestNo = 79;//接口请求唯一序号
+};
+
+
+//######发行资产接口请求
+message PSOrgAssetCreate {
+	string hexAddr = 1;//签名地址
+	string rpmdHash = 2;//签名地址hash
+	string type = 4;//资产类型，货币、实物、券类、积分、卡类...
+	string alias = 6;//资产别名
+	string dataTable = 7;//资产检索条件
+	string dmtEname = 8;//货币英文名称,如：FBS
+	string dmtCname = 9;//货币中文名称,如：泛融币
+	double genisCount = 10;//创始数量
+	double genisDeposit = 11;//创始保证金
+	string metadata = 14 [jstype = JS_NORMAL];//扩展信息
+
+	string requestNo = 79;//接口请求唯一序号
+};
+//######发行资产接口响应
+message PRetOrgAssetCreate
+{
+	string errCode = 1;
+	string msg = 2;
+
+	PMAssetInfo assets = 3;
+	string requestNo = 79;//接口请求唯一序号
+};
+
+

@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package org.fc.bc.wlt.eth;
+
+enum PETHModule {
+	 ETH = 0;	 
+};
+
+enum PETHCommand {
+	
+//正常方法	
+	ETA = 0;//创建以太坊账户
+	ETX = 1;//交易（转账）--以太币对以太币
+};
+
+//############创建以太坊账户#########
+message PSETHCreatedAccount{
+	string requestNo = 1;
+};
+message PRetETHCreatedAccount{
+	string requestNo = 1;
+	string retCode = 2;
+	string msg = 3;
+	string addr = 7;//客户地址
+	string privKey = 4;//客户私钥
+	string pubKey = 5;//客户公钥
+	string address = 6;//
+};
+
+//############创建交易##########
+message PSETHCreatedTx{
+	string requestNo = 1;//请求参数
+	string sendAddress = 2;//发送方：用户地址
+	string receiveAddress = 3;//接收方：用户地址
+	string gasLimit = 4;//手续费最大金额
+	string gasPrice = 5;//
+	string value = 6;//转账金额：wei
+	string sendPrivKey = 7;//转出方：用户密钥
+};
+
+message PRetETHCreatedTx{
+	string requestNo = 1;//请求编号
+	string retCode = 2;//返回编号
+	string msg = 3;//返回信息
+	string txdetail = 4;//交易信息
+};
+//################# 根据交易查找交易信息###################
+message PSETHSearchTx
+{
+	string requestNo = 1;//请求编号
+	string txhash = 2;//交易的哈希值
+	string tx = 3;//交易
+	//string  = 4;//
+	
+}
+message PRetETHSearchTx
+{
+	string requestNo = 1;//请求编号
+	string retCode = 2;//返回编号
+	string msg = 3 ;//返回值信息 success 或失败原因； 
+	string data = 4;//返回数据
+}
+//################根据客户地址查询客户信息#################
+message PSETHSearchAccount
+{
+	string requestNo = 1;//请求编号
+	string address = 2;//客户地址
+}
+message PRetETHSearchAccount
+{
+	string requestNo = 1;//请求编号
+	string retCode = 2;//返回编号
+	string msg = 3;//返回信息：success或失败原因；
+	string data = 4;//返回数据
+}
+//################# 注册以太坊账户，并返回注册信息  #########
+
+
+//###############根据公钥 获取本账户 所有交易信息 ###########
+
+
+//###########根据提供的公钥，获取账户所有 交易信息 #############
+
+message PAccountDetail{
+	string address = 1;
+	string total_received =2;
+	string total_sent =3;
+	string balance =4;
+	string unconfirmed_balance =5;
+	string n_tx =6;
+	string unconfirmed_n_tx =7;
+	repeated PTxRefs txrefs =8;
+	string tx_url = 9;
+
+}
+message PTxRefs {
+	string tx_hash = 1;
+	string block_height =2;
+	string tx_input_n =3;
+	string tx_output_n = 4;
+	string value = 5;
+	string ref_balance = 6;
+	string confirmations =7;
+	string confirmed = 8;
+	bool double_spend = 9;
+}
+
+

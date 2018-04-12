@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package org.brewchain.wallet.service;
+
+enum PWALModule {
+	WAL = 0;
+};
+enum PWALCommand {
+	REG = 0; //创建CWB账户
+	LIN = 1; //CWB转账
+	//CWB账户查询
+	VTB = 3;//CWV映射CWB
+};
+
+message PSCWV2CWB
+{
+	string cwv_addr = 1;//用户cwv地址
+	string cwb_addr = 2;//用户cwb地址
+	string amount = 3;//映射总额
+	
+}
+
+message PRetCWV2CWB
+{
+	string ret_code = 1;//返回码
+	string ret_msg = 2;//返回信息
+	
+}
+
+
+
+
