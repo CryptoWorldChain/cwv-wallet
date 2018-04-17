@@ -2,6 +2,7 @@ package org.brewchain.cwv.wlt.service.query;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -19,6 +20,8 @@ import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltMonitorExample;
 import org.brewchain.cwv.wlt.enums.AssetReturnEnum;
 import org.brewchain.cwv.wlt.enums.TransferReturnEnum;
 import org.brewchain.cwv.wlt.enums.UserReturnEnum;
+import org.brewchain.cwv.wlt.helper.BaseHelper;
+import org.brewchain.cwv.wlt.helper.EthereumJHelper;
 import org.brewchain.cwv.wlt.util.DoubleUtil;
 import org.fc.wlt.gens.Asset.PMAssetInfo;
 import org.fc.wlt.gens.Asset.PMFullAddress;
@@ -48,6 +51,9 @@ public class MonitorAssetService extends SessionModules<PSGetAsset> {
 	@ActorRequire
 	Daos daos;
 	
+	@ActorRequire
+	EthereumJHelper ethHelper;
+	
 	@Override
 	public String[] getCmds() {		
 		return new String[] { PQRYCommand.GOA.name() };
@@ -58,7 +64,7 @@ public class MonitorAssetService extends SessionModules<PSGetAsset> {
 		return PQRYModule.QRY.name();
 	}
 	public String toString(){
-		return "QueryAssetService";
+		return "MonitorAssetService";
 	}
 	ThreadPoolExecutor exec = new ThreadPoolExecutor(20, 100, 60, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>());
@@ -81,7 +87,7 @@ public class MonitorAssetService extends SessionModules<PSGetAsset> {
 				public void run() {
 					try {
 						//TODO 调用eth查询账户余额接口
-						
+						Map<String,Object> ethData = ethHelper.checkWalletETH(addrs);
 						//使用查询结果中的余额与监听中的基础余额比较，超出即为已充值
 						BigDecimal balance = baseBalance.add(new BigDecimal("1"));
 						
@@ -90,10 +96,10 @@ public class MonitorAssetService extends SessionModules<PSGetAsset> {
 							//移除监听
 							wltMonitor.setStatus("1");
 							daos.wltMonitorDao.updateByPrimaryKey(wltMonitor);
-							//TODO 暂时不将用户cwv账户余额转移到大钱包
-							PSAssetTransfer.Builder assetTransfer = PSAssetTransfer.newBuilder();
+							//TODO 暂时不将用户cwv账户余额转移到大钱包，如果转入，需提前告知用户，充值后，需扣除一部分管理费，用作转到大钱包使用
 							
-							PRetAssetTransfer.Builder ret = PRetAssetTransfer.newBuilder();
+//							PSAssetTransfer.Builder assetTransfer = PSAssetTransfer.newBuilder();
+//							PRetAssetTransfer.Builder ret = PRetAssetTransfer.newBuilder();
 							
 						}
 						

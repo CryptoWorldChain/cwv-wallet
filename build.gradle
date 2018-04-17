@@ -14,7 +14,6 @@ apply plugin: 'zippo'
 
 
 dependencies {
-	compile ("org.fc.zippo:org.fc.zippo.oapi:3.3.0")
 	compile "org.fc.zippo:org.fc.zippo.ordbutils:3.0.5"
 	compile ("org.brewchain.cwv:org.brewchain.cwv.cwv-wallet-orm:1.0.1")
 }
