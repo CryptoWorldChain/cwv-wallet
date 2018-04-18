@@ -14,11 +14,22 @@ enum PTRSCommand {
 	BST = 12; //资产挂单交易，A1->u2,A2->u1，自持有资产不满足交易时先做撮合交易，撮合交易后也不能满足时才失败
 	BSM = 13; //资产挂单撮合，A1->A2转换，成功或失败，不做挂单处理
 	UAT = 14; //资产转移，直接转给另一个用户（u1只需说要传给u2，10个FBS，如果A没有FBS时，尝试撮合交易用持有资产获得到10个FBS后给u2）
+	TXS = 15;//转账，冷钱包使用
 };
 
 //交易中无论转入资产还是新建资产，都需要先提供新的地址，旧地址不再使用，状态为：资产耗尽
 
+message PSTransfer//TXS
+{
+	string sign = 1;//签名
+	string coin = 2;//币种
+}
 
+message PRetTransfer//TXS
+{
+	string retCode = 1;//返回码
+	string retMsg = 2;//返回信息
+}
 
 //######资产挂单创建接口请求
 message PSBuySellNew

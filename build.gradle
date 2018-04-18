@@ -2,6 +2,7 @@ buildscript {
 	dependencies { 
 		classpath "onight.osgi:zpp-gradle:3.0.0"
 		classpath "org.brewchain.cwv:org.brewchain.cwv.cwv-wallet-orm:1.0.1" 
+		
 	}
 }
 
@@ -16,11 +17,12 @@ apply plugin: 'zippo'
 dependencies {
 	compile "org.fc.zippo:org.fc.zippo.ordbutils:3.0.5"
 	compile ("org.brewchain.cwv:org.brewchain.cwv.cwv-wallet-orm:1.0.1")
+	includeInJar ("org.bouncycastle:bcprov-jdk15on:1.58")
 }
 
 jar {
 	manifest{
-		attributes( 'Import-Ignore':'scalaj.http,org.springframework,org.freemarker,freemarker,com.google.gson,io.jsonwebtoken')
+		attributes( 'Import-Ignore':'scalaj.http,org.springframework,org.freemarker,freemarker,com.google.gson,io.jsonwebtoken,org.bouncycastle')
 		attributes( 'provider':'org.brewchain')
 		
 	}

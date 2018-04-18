@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package org.fc.wlt.gens;
+
+enum PACCModule {
+	 ACC = 0;	 
+};
+
+enum PACCCommand {
+	QAI = 0; //账户
+};
+
+message PSAccountInfo{ //QAI
+	string address = 1;//地址
+	string coin = 2;//币种
+}
+
+message PRetAccountInfo{ //QAI
+	string address = 1;//地址
+	double balance = 2;//总金额
+	int32 nonce = 3;//
+	string retCode = 4;
+	string retMsg = 5;
+}
+
+message PRetAccountInfo2{ //QAI
+	string address = 1;//地址
+	double total_received = 2;//总接收
+	double total_sent = 3;//总发送
+	double balance = 4;//总金额
+	double unconfirmed_balance = 5;//未确认金额
+	double final_balance = 6;//最后余额
+	int32 n_tx = 7;//
+	int32 unconfirmed_n_tx = 8;
+	int32 final_n_tx = 9;
+	int32 nonce = 10;//
+	int32 pool_nonce = 11;
+	string retCode = 12;
+	string retMsg = 13;
+}

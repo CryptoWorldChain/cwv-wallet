@@ -1,20 +1,9 @@
 package org.brewchain.cwv.wlt.helper;
 
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.felix.ipojo.annotations.Provides;
-import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAddr;
-//import org.ethereum.core.Transaction;
-//import org.ethereum.crypto.ECKey;
-//import org.ethereum.util.ByteUtil;
-//import org.ethereum.util.Utils;
-//import org.fc.tx.dbgens.tps.entity.TXTpsAccountDetail;
-//import org.fc.tx.service.tps.Tps.PRetWallet;
-//import org.fc.tx.service.tps.Tps.PRetWallet.Addrs;
-//import org.spongycastle.util.BigIntegers;
-//import org.spongycastle.util.encoders.Hex;
 
 import lombok.Data;
 import lombok.val;
@@ -90,21 +79,17 @@ public class EthereumJHelper implements ActorService {
 		String url = ETH_BASE_URL + "/addrs/" + addr + "/balance";
 		log.debug("request the eth url is : " + url);
 		FramePacket fp = PacketHelper.buildUrlForGet(url);
-
+		
 		val yearMeasureRet = sender.send(fp, 30000);
+//		PRetAccountInfo2.Builder accountInfo = PRetAccountInfo2.newBuilder().mergeFrom(yearMeasureRet.getBody());
 		Map<String, Object> jsonRet = null;
 		try {
 			jsonRet = JsonSerializer.getInstance().deserialize(new String(yearMeasureRet.getBody()), Map.class);
 		} catch (Exception e) {
 			throw new Exception(e);
 		}
-		jsonRet.put("errCode", "000000");
-		jsonRet.put("msg", "successful");
-
-		Map<String, Object> assetMap = new HashMap<String, Object>();
-		double holdCount = (double)(Long.valueOf(jsonRet.get("balance").toString()));
-		assetMap.put("holdCount", holdCount);
-		jsonRet.put("asset", assetMap);
+		jsonRet.put("errCode", "0000");
+		jsonRet.put("msg", "success");
 
 		return jsonRet;
 	}
@@ -151,7 +136,7 @@ public class EthereumJHelper implements ActorService {
 	 * @return 接口返回信息
 	 * @throws Exception
 	 */
-//	public Map<String, Object> walletTrade(String inputAddr, String inputPriKey, String outputAddr, long amount, long gasPrice, long gasLimit) throws Exception {
+//	public Map<String, Object> transfer(String inputAddr, String inputPriKey, String outputAddr, long amount, long gasPrice, long gasLimit) throws Exception {
 //		String tx = getTransactionInfo(inputAddr, inputPriKey, gasPrice, gasLimit, outputAddr, amount);
 //		
 //		String url = ETH_TEST_URL + "/txs/push?" + ETH_TOKEN;
@@ -183,6 +168,47 @@ public class EthereumJHelper implements ActorService {
 //
 //		return jsonRet;
 //	}
+	
+	/**
+	 * 钱包交易
+	 * 
+	 * @param inputs
+	 *            交易输入
+	 * @param outputs
+	 *            交易输出
+	 * @return 接口返回信息
+	 * @throws Exception
+	 */
+	public Map<String, Object> transfer(String signStr) throws Exception {
+		
+		String url = ETH_TEST_URL + "/txs/push?" + ETH_TOKEN;
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("tx", signStr);
+		String sendJson = JsonSerializer.formatToString(params);
+//		log.debug("tx send json is ", sendJson + "test");
+		
+		FramePacket fposttx = PacketHelper.buildUrlFromJson(sendJson, "POST", url);
+		val txretReg = sender.send(fposttx, 30000);
+		Map<String, Object> jsonRet = null;
+		try {
+			jsonRet = JsonSerializer.getInstance().deserialize(new String(txretReg.getBody()), Map.class);
+		} catch (Exception e) {
+			throw new Exception(e);
+		}
+		if(jsonRet.get("error") != null) {
+			jsonRet.put("errCode", "-1");
+			jsonRet.put("msg",jsonRet.get("error"));
+		}else {
+			jsonRet.put("errCode", "1");
+			jsonRet.put("msg", "success");
+		}
+//
+//		Map<String, Object> assetMap = new HashMap<String, Object>();
+//		assetMap.put("holdCount", jsonRet.get("balance"));
+//		jsonRet.put("holdCount", jsonRet.get("balance"));
+
+		return jsonRet;
+	}
 
 	/**
 	 * 获取交易的hash

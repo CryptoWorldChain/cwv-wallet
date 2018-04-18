@@ -1,6 +1,7 @@
 package org.brewchain.cwv.wlt.helper;
 
 import java.util.Date;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.ipojo.annotations.Provides;
@@ -50,6 +51,10 @@ public class WltHelper implements ActorService {
 	
 	@ActorRequire(name="http",scope="global")
 	IPacketSender sender;
+	
+	
+	@ActorRequire
+	EthereumJHelper ethHelper;
 	
 	@ActorRequire
 	Daos daos;
@@ -358,4 +363,36 @@ public class WltHelper implements ActorService {
 //		
 //		return transfer_code;
 	}
+	
+	/**
+	 *  交易转账
+	 * @param sign 签名字符串
+	 * @param coin 币种路由
+	 * @throws Exception 
+	 */
+	public Map<String, Object> transfer(String signStr,String coin) throws Exception{
+		//TODO 枚举路由
+		if("ETH".equals(coin)){
+			return ethHelper.transfer(signStr);
+		}else{
+			throw new Exception("暂不支持该币种");
+		}
+		
+	}
+	
+	/**
+	 * 查询账户余额
+	 * @param coin
+	 * @param address
+	 * @return
+	 * @throws Exception
+	 */
+	public Map<String, Object> queryAccount(String coin,String address) throws Exception{
+		if("ETH".equals(coin)){
+			return ethHelper.checkWalletETH(address);
+		}else{
+			throw new Exception("暂不支持该币种");
+		}
+	} 
+	
 }

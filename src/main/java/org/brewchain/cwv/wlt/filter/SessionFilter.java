@@ -34,6 +34,8 @@ public class SessionFilter extends SimplePacketFilter implements PacketFilter, A
 	private final static String QUERY_TRANSFER_URL = "/fbs/qry/pbgat.do";
 	private final static String BCWWW_LOGIN = "/fbs/bcw/pblin.do";
 	private final static String QUERY_ADDRESS_URL = "/fbs/qry/pbgua.do";
+	private final static String QUERY_ACCOUNT_URL = "/cwv/acc/pbqai.do";
+	private final static String TRANSFER_URL = "/cwv/trs/pbtxs.do";
 	
 	@ActorRequire
 	Daos daos;
@@ -64,34 +66,34 @@ public class SessionFilter extends SimplePacketFilter implements PacketFilter, A
 	public boolean postRoute(final ActWrapper actor, final FramePacket pack, final CompleteHandler handler)
 			throws FilterException {
 		String pathUrl = pack.getHttpServerletRequest().getRequestURI();
-		if(!pathUrl.equals(BCWWW_LOGIN)) {
-			ObjectNode body = null;
-			String respStr = (String) pack.getFbody();
-			if (respStr.length() > 255) {
-				respStr = respStr.substring(0, 255);
-			}
-			try {
-				body = (ObjectNode) mapper.readTree(new String(pack.getBody()));
-			} catch (Exception e) {
-				e.printStackTrace();
-				throw new UnknownError("unknown error ...");
-			}
-			String requestNo = body.get("requestNo").toString();
-			requestNo = requestNo.substring(1, requestNo.length() - 1);
-			CWVWltAccessLogKey accessKey = new CWVWltAccessLogKey(requestNo);
-			CWVWltAccessLog oldAccess = daos.wltAccessLogDao.selectByPrimaryKey(accessKey);
-			if (oldAccess != null) {
-				Date current = new Date();
-				long start = oldAccess.getCreatedTime().getTime();
-				long end = current.getTime();
-				int cost = (int) (end - start);
-				oldAccess.setCostMs(cost);
-				oldAccess.setUpdatedTime(current);
-				oldAccess.setRespStr(respStr);
-				daos.wltAccessLogDao.updateByPrimaryKey(oldAccess);
-				
-			}
-		}
+//		if(!pathUrl.equals(BCWWW_LOGIN)) {
+//			ObjectNode body = null;
+//			String respStr = (String) pack.getFbody();
+//			if (respStr.length() > 255) {
+//				respStr = respStr.substring(0, 255);
+//			}
+//			try {
+//				body = (ObjectNode) mapper.readTree(new String(pack.getBody()));
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//				throw new UnknownError("unknown error ...");
+//			}
+//			String requestNo = body.get("requestNo").toString();
+//			requestNo = requestNo.substring(1, requestNo.length() - 1);
+//			CWVWltAccessLogKey accessKey = new CWVWltAccessLogKey(requestNo);
+//			CWVWltAccessLog oldAccess = daos.wltAccessLogDao.selectByPrimaryKey(accessKey);
+//			if (oldAccess != null) {
+//				Date current = new Date();
+//				long start = oldAccess.getCreatedTime().getTime();
+//				long end = current.getTime();
+//				int cost = (int) (end - start);
+//				oldAccess.setCostMs(cost);
+//				oldAccess.setUpdatedTime(current);
+//				oldAccess.setRespStr(respStr);
+//				daos.wltAccessLogDao.updateByPrimaryKey(oldAccess);
+//				
+//			}
+//		}
 		return super.postRoute(actor, pack, handler);
 	}
 
@@ -113,8 +115,7 @@ public class SessionFilter extends SimplePacketFilter implements PacketFilter, A
 			} catch (Exception e) {
 				throw new UnknownError("unknown error ...");
 			}
-
-			if(!pathUrl.equals(BCWWW_LOGIN)) {
+			if(!pathUrl.equals(BCWWW_LOGIN)&&!openUrl(pathUrl)) {
 				if (!node.has("requestNo")) {
 					throw new NullPointerException("requestNo is null, please specify an unique requestNo while you asking the api");
 				}
@@ -175,6 +176,12 @@ public class SessionFilter extends SimplePacketFilter implements PacketFilter, A
 			return true;
 		}
 		if(pathUrl.equals(QUERY_ADDRESS_URL)) {
+			return true;
+		}
+		if(pathUrl.equals(QUERY_ACCOUNT_URL)) {
+			return true;
+		}
+		if(pathUrl.equals(TRANSFER_URL)) {
 			return true;
 		}
 		return false;
