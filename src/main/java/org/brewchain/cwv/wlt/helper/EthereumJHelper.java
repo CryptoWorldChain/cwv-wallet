@@ -85,6 +85,7 @@ public class EthereumJHelper implements ActorService {
 		Map<String, Object> jsonRet = null;
 		try {
 			jsonRet = JsonSerializer.getInstance().deserialize(new String(yearMeasureRet.getBody()), Map.class);
+			log.debug("param : " + new String(yearMeasureRet.getBody()));
 		} catch (Exception e) {
 			throw new Exception(e);
 		}

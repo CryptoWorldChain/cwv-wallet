@@ -26,6 +26,8 @@ import org.brewchain.wallet.service.Wallet.RespGetAccount;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.fc.brewchain.bcapi.EncAPI;
+import org.fc.brewchain.bcapi.KeyPairs;
 import org.fc.wlt.gens.Asset.PMAssetInfo;
 import org.fc.wlt.gens.Asset.PMFullAddress;
 import org.fc.wlt.gens.Asset.PMFundInfo;
@@ -65,24 +67,23 @@ public class CWBHelper implements ActorService {
 	@ActorRequire
 	Daos daos;
 	
-	private final String TXT_STX = "http://ip:port/rootpath/txt/pbstx.do";
-	private final String ACT_GAC = "http://ip:port/rootpath/act/pbgac.do";
-	private final String ACT_CAC = "http://ip:port/rootpath/act/pbcac.do";
+	@ActorRequire(name = "bc_encoder", scope = "global")
+	EncAPI encApi;
+	
+	private final String TXT_MTX = "http://127.0.0.1:8000/cwv/txt/pbmtx.do";
+	private final String ACT_GAC = "http://127.0.0.1:8000/cwv/act/pbgac.do";
+	private final String ACT_CAC = "http://127.0.0.1:8000/cwv/act/pbcac.do";//创建账户
 	
 	/**
-	 * CWB创建账户
-	 * 
-	 * 
+	 * cwb创建账户
 	 */
-	public void createAccount(){
-		
+	public KeyPairs createAccount(){
+		return encApi.genKeys();
 	}
 	
 	/**
-	 * CWB交易
+	 * cwb交易
 	 * @throws Exception 
-	 * 
-	 * 
 	 */
 	public boolean transfer(int amount,int fee,int feeLimit,String senderAddr,String receiveAddr,String pubKey) throws Exception{
 		RespGetAccount.Builder senderAccount;
@@ -105,7 +106,7 @@ public class CWBHelper implements ActorService {
 		params.put("txHash", ByteString.copyFrom(ByteUtil.EMPTY_BYTE_ARRAY));
 		String sendJson = JsonSerializer.formatToString(params);
 		
-		FramePacket fposttx = PacketHelper.buildUrlFromJson(sendJson, "POST", TXT_STX);
+		FramePacket fposttx = PacketHelper.buildUrlFromJson(sendJson, "POST", TXT_MTX);
 		val txretReg = sender.send(fposttx, 30000);
 		Map<String, Object> jsonRet = JsonSerializer.getInstance().deserialize(new String(txretReg.getBody()), Map.class);
 		if(jsonRet.get("retCode")!=null&&Integer.parseInt(jsonRet.get("retCode").toString())==1){
@@ -116,14 +117,13 @@ public class CWBHelper implements ActorService {
 	}
 	
 	/**
-	 * CWB交易
+	 * 查询cwb账户信息
+	 * @param 查询地址
 	 * @throws InvalidProtocolBufferException 
-	 * 
-	 * 
 	 */
 	public RespGetAccount.Builder queryAccount(String address) throws InvalidProtocolBufferException {
 		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("address", new Date().getTime());
+		params.put("address", address);
 		String sendJson = JsonSerializer.formatToString(params);
 		
 		FramePacket fposttx = PacketHelper.buildUrlFromJson(sendJson, "POST", ACT_GAC);

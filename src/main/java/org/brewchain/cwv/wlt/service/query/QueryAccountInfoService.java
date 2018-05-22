@@ -1,34 +1,14 @@
 package org.brewchain.cwv.wlt.service.query;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.brewchain.cwv.wlt.dao.Daos;
-import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAddr;
-import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAddrExample;
-import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAsset;
-import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAssetExample;
-import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltFund;
-import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltFundExample;
-import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltUser;
-import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltUserExample;
-import org.brewchain.cwv.wlt.enums.AssetReturnEnum;
-import org.brewchain.cwv.wlt.enums.UserReturnEnum;
-import org.brewchain.cwv.wlt.enums.UserStatusEnum;
 import org.brewchain.cwv.wlt.helper.WltHelper;
 import org.fc.wlt.gens.Acc.PACCCommand;
 import org.fc.wlt.gens.Acc.PACCModule;
 import org.fc.wlt.gens.Acc.PRetAccountInfo;
 import org.fc.wlt.gens.Acc.PSAccountInfo;
-import org.fc.wlt.gens.Asset.PMFundInfo;
-import org.fc.wlt.gens.Query.PQRYCommand;
-import org.fc.wlt.gens.Query.PQRYModule;
-import org.fc.wlt.gens.Query.PRetGetAssetFundInfo;
-import org.fc.wlt.gens.Query.PSGetAssetFundInfo;
-import org.fc.wlt.gens.Transfer.PRetTransfer;
-import org.fc.wlt.gens.Transfer.PSTransfer;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

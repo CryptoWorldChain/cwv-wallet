@@ -374,6 +374,8 @@ public class WltHelper implements ActorService {
 		//TODO 枚举路由
 		if("ETH".equals(coin)){
 			return ethHelper.transfer(signStr);
+		}else if("CWB".equals(coin)){
+			return null;
 		}else{
 			throw new Exception("暂不支持该币种");
 		}
@@ -390,9 +392,15 @@ public class WltHelper implements ActorService {
 	public Map<String, Object> queryAccount(String coin,String address) throws Exception{
 		if("ETH".equals(coin)){
 			return ethHelper.checkWalletETH(address);
+		}else if("CWB".equals(coin)){
+			return null;
 		}else{
 			throw new Exception("暂不支持该币种");
 		}
 	} 
+	
+	public void createAccount(){
+		
+	}
 	
 }
