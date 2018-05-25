@@ -6,10 +6,11 @@ enum PWALModule {
 	WAL = 0;
 };
 enum PWALCommand {
-	REG = 0; //创建CWB账户
-	LIN = 1; //CWB转账
+	ENU = 0;
+	//REG = 0; //创建CWB账户
+	//LIN = 1; //CWB转账
 	//CWB账户查询
-	VTB = 3;//CWV映射CWB
+	//VTB = 3;//CWV映射CWB
 };
 
 message PSCWV2CWB
@@ -27,9 +28,13 @@ message PRetCWV2CWB
 	
 }
 
-message RespGetAccount {
+
+//地址相关
+
+message RespGetAccount {//查询地址返回
     Account account = 1;
     int32 retCode = 2;
+    string msg = 3;
 }
 
 message Account {
@@ -54,13 +59,29 @@ message AccountTokenValue {
 }
 
 //交易相关参数
-message ReqCreateMultiTransaction {
+message ReqGetTxByHash {//根据交易hash查询交易请求
+	string hexTxHash = 1;
+}
+
+message RespGetTxByHash {//根据交易hash查询交易返回
 	MultiTransactionImpl transaction = 1;
+	int32 retCode = 2;
+}
+
+message ReqCreateMultiTransaction {//创建交易请求
+	MultiTransactionImpl transaction = 1;
+}
+
+message RespCreateTransaction {//创建交易返回
+    string txHash = 1;
+	int32 retCode = 2;
+	string retMsg = 3;
 }
 
 message MultiTransactionImpl {
     string txHash = 1;
 	MultiTransactionBodyImpl txBody = 2;
+	MultiTransactionNodeImpl node = 3;
 } 
 
 message MultiTransactionBodyImpl {
@@ -95,5 +116,12 @@ message MultiTransactionOutputImpl {
 message MultiTransactionSignatureImpl {
 	string signature = 1;
 	string pubKey = 2;
+}
+
+
+message MultiTransactionNodeImpl {
+	string node = 1;
+	string ip = 2;
+	string bcuid = 3;
 }
 

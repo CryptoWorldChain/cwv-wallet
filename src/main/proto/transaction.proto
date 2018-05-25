@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package org.brewchain.wallet.service;
+
+enum PTSAModule {
+	TSA = 0;
+};
+enum PTSACommand {
+	NTS = 0;	//创建交易
+	QTS = 1;	//查询交易
+};
+
+message ReqQueryTransaction {
+	string txHash = 1;
+}
+
+message ResQueryTransaction {
+
+}
+
+
