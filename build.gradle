@@ -16,7 +16,7 @@ apply plugin: 'zippo'
 
 dependencies {
 	compile "org.fc.zippo:org.fc.zippo.ordbutils:3.0.5"
-	compile ("org.brewchain.cwv:org.brewchain.cwv.cwv-wallet-orm:1.0.1")
+	compile ("org.brewchain.cwv:org.brewchain.cwv.cwv-wallet-orm:1.0.2")
 	compile ("org.brewchain:org.brewchain.bcapi:3.3.3")
 	includeInJar ("org.bouncycastle:bcprov-jdk15on:1.58")
 }

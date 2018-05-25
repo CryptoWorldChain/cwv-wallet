@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package org.brewchain.wallet.service;
+
+enum PTSTModule {
+	TST = 0;
+};
+enum PTSTCommand {
+	CRT = 0;
+};
+
+message ReqCrt
+{
+	
+	
+}
+
+message RetCrt
+{
+	string ret_code = 1;//返回码
+	string ret_msg = 2;//返回信息
+	
+}
+
