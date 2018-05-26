@@ -125,6 +125,7 @@ message MultiTransactionImpl {//交易详情
     string txHash = 1;//交易hash
 	MultiTransactionBodyImpl txBody = 2;//交易内容体 *
 	MultiTransactionNodeImpl node = 3;//交易节点
+	string status = 4;//交易状态
 };
 
 message MultiTransactionBodyImpl {//交易内容体详情
