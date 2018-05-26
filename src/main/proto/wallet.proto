@@ -11,13 +11,14 @@ enum PWLTCommand {
 	NTS = 2;//创建交易；请求：ReqCreateMultiTransaction；返回：RespCreateTransaction
 	QTS = 3;//查询交易；请求：ReqGetTxByHash；返回：RespGetTxByHash
 	NCR = 4;//创建合约；请求：ReqCreateContractTransaction；返回：RespCreateContractTransaction
-	DCR = 5;//执行合约；请求：ReqDoContractTransaction；返回：RespDoContractTransaction
+	DCR = 5;//执行合约；请求：ReqDoContractTransaction；返回：RespCreateTransaction
 };
 
+//game需要提供的参数 均标注 * 强调
 //地址相关
 
 message ReqNewAddress{//创建地址请求
-	string type = 1;//地址类型
+	string type = 1;//地址类型 *
 	string seed = 2;//地址助记词
 };
 
@@ -28,7 +29,7 @@ message RetNewAddress{//创建地址返回
 };
 
 message ReqGetAccount {//查询地址请求
-    string address = 1;//地址
+    string address = 1;//地址 *
 };
 
 message RespGetAccount {//查询地址返回
@@ -74,11 +75,11 @@ message AccountCryptoTokenImpl {//token详情
 
 //合约相关
 message ReqCreateContractTransaction {//创建合约请求
-	MultiTransactionInputImpl input = 1;//合约发起方
+	MultiTransactionInputImpl input = 1;//合约发起方 *
 	string exdata = 2;//附属信息
 	MultiTransactionSignatureImpl signature = 3;//合约签名
 	repeated string delegate = 4;//代理
-	string data = 5;//合约内容
+	string data = 5;//合约内容 *
 	int64 timestamp = 6;//时间戳
 };
 
@@ -89,38 +90,31 @@ message RespCreateContractTransaction {//创建合约返回
 	string retMsg = 4;//返回信息
 };
 
-message ReqDoContractTransaction {//执行合约请求
-	MultiTransactionInputImpl input = 1;//合约发起方
-	MultiTransactionOutputImpl output =2;//合约参与者
+message ReqDoContractTransaction {//执行合约请求。执行合约返回为：RespCreateTransaction
+	MultiTransactionInputImpl input = 1;//合约发起方 *
+	MultiTransactionOutputImpl output =2;//合约参与者 *
 	string exdata = 3;//附属信息
 	MultiTransactionSignatureImpl signature = 4;//合约签名
 	repeated string delegate = 5;//代理
-	string data = 6;//合约要执行的方法，以及参数
+	string data = 6;//合约要执行的方法，以及参数 * 
 	int64 timestamp = 7;//时间戳
-};
-
-message RespDoContractTransaction {//执行合约返回
-	string txHash = 1;//交易hash
-	string contractAddress = 2;//合约地址
-	int32 retCode = 3;//返回码
-	string retMsg = 4;//返回信息
 };
 
 //交易相关参数
 message ReqGetTxByHash {//根据交易hash查询交易请求
-	string hexTxHash = 1;//交易hash
+	string hexTxHash = 1;//交易hash * 
 };
 
 message RespGetTxByHash {//根据交易hash查询交易返回
-	MultiTransactionImpl transaction = 1;//交易详情
+	MultiTransactionImpl transaction = 1;//交易详情 *
 	int32 retCode = 2;//返回码
 };
 
 message ReqCreateMultiTransaction {//创建交易请求
-	MultiTransactionImpl transaction = 1;//交易内容
+	MultiTransactionImpl transaction = 1;//交易内容 *
 };
 
-message RespCreateTransaction {//创建交易返回
+message RespCreateTransaction {//创建交易返回;执行合约返回
     string txHash = 1;//交易hash
 	int32 retCode = 2;//返回码
 	string retMsg = 3;//返回信息
@@ -128,37 +122,37 @@ message RespCreateTransaction {//创建交易返回
 
 message MultiTransactionImpl {//交易详情
     string txHash = 1;//交易hash
-	MultiTransactionBodyImpl txBody = 2;//交易内容体
+	MultiTransactionBodyImpl txBody = 2;//交易内容体 *
 	MultiTransactionNodeImpl node = 3;//交易节点
 };
 
 message MultiTransactionBodyImpl {//交易内容体详情
-	repeated MultiTransactionInputImpl inputs = 1;//发起方
-	repeated MultiTransactionOutputImpl outputs = 2;//接收方
+	repeated MultiTransactionInputImpl inputs = 1;//发起方 *
+	repeated MultiTransactionOutputImpl outputs = 2;//接收方 *
 	string exdata = 3;//附属信息
 	repeated MultiTransactionSignatureImpl signatures = 4;//签名
 	repeated string delegate = 5;//代理
-	string data = 6;//合约内容
+	string data = 6;//合约内容 *
 	int64 timestamp = 7;//时间戳
 };
 
 message MultiTransactionInputImpl {//发起方详情
-	int32 nonce = 1;//交易次数
+	int32 nonce = 1;//交易次数 *
 	int32 fee = 2;//手续费
 	int32 feeLimit = 3;//。。。。
-	string address = 4;//发起方地址
-	int64 amount= 5;//交易金额
-	string pubKey = 6;//发起方公钥
-	string token = 7;//ERC20 token名字
-	string symbol = 8;//ERC721 token标记
-	string cryptoToken = 9;//ERC721 token名字
+	string address = 4;//发起方地址 *
+	int64 amount= 5;//交易金额 *
+	string pubKey = 6;//发起方公钥 *
+	string token = 7;//ERC20 token名字 *
+	string symbol = 8;//ERC721 token标记 *
+	string cryptoToken = 9;//ERC721 token名字 *
 };
 
 message MultiTransactionOutputImpl {//接收方详情
-	string address= 1;//接收方地址
-	int64 amount= 2;//交易金额
-	string symbol = 3;//ERC721 token 标记
-	string cryptoToken = 4;//ERC721 token名字
+	string address= 1;//接收方地址 *
+	int64 amount= 2;//交易金额 *
+	string symbol = 3;//ERC721 token 标记 *
+	string cryptoToken = 4;//ERC721 token名字 *
 };
 
 message MultiTransactionSignatureImpl {//签名详情
