@@ -91,14 +91,8 @@ message RespCreateContractTransaction {//创建合约返回
 	string retMsg = 4;//返回信息
 };
 
-message ReqDoContractTransaction {//执行合约请求。执行合约返回为：RespCreateTransaction
-	MultiTransactionInputImpl input = 1;//合约发起方 *
-	MultiTransactionOutputImpl output =2;//合约参与者 *
-	string exdata = 3;//附属信息
-	MultiTransactionSignatureImpl signature = 4;//合约签名
-	repeated string delegate = 5;//代理
-	string data = 6;//合约要执行的方法，以及参数 * 
-	int64 timestamp = 7;//时间戳
+message ReqDoContractTransaction {//执行合约请求,与创建交易相同。执行合约返回为：RespCreateTransaction
+	MultiTransactionImpl transaction = 1;//交易内容 *
 };
 
 //交易相关参数
