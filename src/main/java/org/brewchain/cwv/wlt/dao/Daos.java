@@ -3,6 +3,7 @@ package org.brewchain.cwv.wlt.dao;
 import org.apache.felix.ipojo.annotations.Instantiate;
 import org.apache.felix.ipojo.annotations.Provides;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAddress;
+import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltTx;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,9 @@ public class Daos implements ActorService, IJPAClient {
 	
 	@StoreDAO
 	public OJpaDAO<CWVWltAddress> wltAddressDao;
+	
+	@StoreDAO
+	public OJpaDAO<CWVWltTx> wltTxDao;
 	
 	@Override
 	public void onDaoServiceAllReady() {

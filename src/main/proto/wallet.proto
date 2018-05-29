@@ -12,6 +12,7 @@ enum PWLTCommand {
 	QTS = 3;//查询交易；请求：ReqGetTxByHash；返回：RespGetTxByHash
 	NCR = 4;//创建合约；请求：ReqCreateContractTransaction；返回：RespCreateContractTransaction
 	DCR = 5;//执行合约；请求：ReqDoContractTransaction；返回：RespCreateTransaction
+	TST = 6;//测试接口
 };
 
 //game需要提供的参数 均标注 * 强调
@@ -162,4 +163,59 @@ message MultiTransactionNodeImpl {//交易节点信息
 	string ip = 2;//节点IP
 	string bcuid = 3;//节点唯一标识
 };
+
+//************** 非 IMPL 对象 *********************//
+
+message MultiTransaction {
+	bytes txHash = 1;
+	MultiTransactionBody txBody = 2;
+	string status = 3;
+	MultiTransactionNode txNode = 4;
+} 
+
+message MultiTransactionBody {
+	repeated MultiTransactionInput inputs = 1;
+	repeated MultiTransactionOutput outputs = 2;
+	bytes exdata = 3;
+	repeated MultiTransactionSignature signatures = 4;
+	repeated bytes delegate = 5;
+	bytes data = 6;
+	int64 timestamp = 7;
+}
+
+message MultiTransactionInput {
+	int32 nonce = 1;
+	int32 fee = 2;
+	int32 feeLimit = 3;
+	bytes address = 4;
+	int64 amount= 5;
+	string pubKey = 6;
+	string token = 7;
+	string symbol = 8;
+	bytes cryptoToken = 9;
+}
+
+message MultiTransactionOutput {
+	bytes address= 1;
+	int64 amount= 2;
+	string symbol = 3;
+	bytes cryptoToken = 4;
+}
+
+message MultiTransactionSignature {
+	string signature = 1;
+	string pubKey = 2;
+}
+
+message MultiTransactionNode {
+	string node = 1;
+	string address = 2;
+	string bcuid = 3;
+}
+
+message Test {
+	bool flag = 1;
+};
+
+
 
