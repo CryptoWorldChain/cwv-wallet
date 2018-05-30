@@ -42,17 +42,16 @@ public class CreateAddress extends SessionModules<ReqNewAddress> {
 	public void onPBPacket(final FramePacket pack, final ReqNewAddress pb, final CompleteHandler handler) {
 		RetNewAddress.Builder ret = RetNewAddress.newBuilder();
 		String address = "";
-		if (pb != null && StringUtils.isNotBlank(pb.getType())) {
-			try{
-				address = addressHelper.registerAddress(pb.getType(), pb.getSeed());
+		try{
+			address = addressHelper.registerAddress(pb.getSeed());
+			if(StringUtils.isNotBlank(address)){
 				ret.setRetCode(1).setMsg("success").setAddress(address);
-			} catch (Exception e){
-				ret.setRetCode(-1).setMsg(e.getMessage());
-				log.error("create addrss error");
+			}else{
+				ret.setRetCode(-1).setMsg("create address error");
 			}
-		} else {
-			log.warn("no address type, create address failed");
-			ret.setRetCode(-1).setMsg("create address error, no address type ");
+		} catch (Exception e){
+			ret.setRetCode(-1).setMsg(e.getMessage());
+			log.error("create addrss error");
 		}
 
 		handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()));

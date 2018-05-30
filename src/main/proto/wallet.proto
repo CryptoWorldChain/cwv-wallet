@@ -19,8 +19,7 @@ enum PWLTCommand {
 //地址相关
 
 message ReqNewAddress{//创建地址请求
-	string type = 1;//地址类型 *
-	string seed = 2;//地址助记词
+	string seed = 1;//地址助记词
 };
 
 message RetNewAddress{//创建地址返回

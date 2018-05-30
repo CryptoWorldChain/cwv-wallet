@@ -70,7 +70,7 @@ public class AddressHelper implements ActorService {
 	 * @param seed
 	 * @return
 	 */
-	public String registerAddress(String type, String seed) {
+	public String registerAddress(String seed) {
 		KeyPairs key = encApi.genKeys();
 		if (StringUtils.isNotBlank(seed)) {
 			key = encApi.genKeys(seed);
@@ -90,7 +90,7 @@ public class AddressHelper implements ActorService {
 		addressEntity.setReserved1("");
 		addressEntity.setReserved2("");
 		addressEntity.setSeed(StringUtils.isNotBlank(seed) ? seed : "");
-		addressEntity.setType(type);
+		addressEntity.setType("");
 		addressEntity.setUpdatedTime(now);
 
 		daos.wltAddressDao.insert(addressEntity);
