@@ -42,8 +42,12 @@ public class CreateAddress extends SessionModules<ReqNewAddress> {
 	public void onPBPacket(final FramePacket pack, final ReqNewAddress pb, final CompleteHandler handler) {
 		RetNewAddress.Builder ret = RetNewAddress.newBuilder();
 		String address = "";
+		String seed = "";
+		if(pb != null && StringUtils.isNotBlank(pb.getSeed())){
+			seed = pb.getSeed();
+		}
 		try{
-			address = addressHelper.registerAddress(pb.getSeed());
+			address = addressHelper.registerAddress(seed);
 			if(StringUtils.isNotBlank(address)){
 				ret.setRetCode(1).setMsg("success").setAddress(address);
 			}else{
