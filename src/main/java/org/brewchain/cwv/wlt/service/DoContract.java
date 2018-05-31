@@ -39,7 +39,7 @@ public class DoContract extends SessionModules<ReqDoContractTransaction>{
 		RespCreateTransaction.Builder ret = null;
 		if(pb != null){
 			try{
-				ret = txHelper.doContract(pack.getBody());
+				ret = txHelper.doContract(pb);
 			} catch (Exception e){
 				log.error("do contract error + " + e.getMessage());
 			}

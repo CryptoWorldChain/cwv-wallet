@@ -28,6 +28,7 @@ import org.brewchain.wallet.service.Wallet.MultiTransactionSignature;
 import org.brewchain.wallet.service.Wallet.MultiTransactionSignatureImpl;
 import org.brewchain.wallet.service.Wallet.ReqCreateContractTransaction;
 import org.brewchain.wallet.service.Wallet.ReqCreateMultiTransaction;
+import org.brewchain.wallet.service.Wallet.ReqDoContractTransaction;
 import org.brewchain.wallet.service.Wallet.RespCreateContractTransaction;
 import org.brewchain.wallet.service.Wallet.RespCreateTransaction;
 import org.brewchain.wallet.service.Wallet.RespGetTxByHash;
@@ -377,10 +378,9 @@ public class TransactionHelper implements ActorService {
 	 * @param reqBody
 	 * @return
 	 */
-	public RespCreateTransaction.Builder doContract(byte[] reqBody) {
+	public RespCreateTransaction.Builder doContract(ReqDoContractTransaction pb) {
 		// 执行合约走的是创建交易的流程，所以结构需要与创建交易保持一致，参与合约的地址为 input，合约地址为 output
-		RespCreateTransaction.Builder ret = null;
-//		ret = createTransaction(reqBody);
+		RespCreateTransaction.Builder ret = createTransaction(pb.getTransaction());
 
 		return ret;
 	}

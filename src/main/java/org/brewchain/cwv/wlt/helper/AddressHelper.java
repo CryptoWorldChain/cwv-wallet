@@ -148,43 +148,49 @@ public class AddressHelper implements ActorService {
 			account.setAcceptLimit(accountNode.has("acceptLimit") ? accountNode.get("acceptLimit").asInt() : 0);
 			if(accountNode.has("address")){
 				ArrayNode addrs = (ArrayNode) accountNode.get("address");
-				for (JsonNode addrObj : addrs){
-					account.addAddress(addrObj.asText());
+				if(addrs != null && addrs.size() > 0){
+					for (JsonNode addrObj : addrs){
+						account.addAddress(addrObj.asText());
+					}
 				}
 			}
 			
 			if(accountNode.has("tokens")){
-				ArrayNode tokens = (ArrayNode) retNode.get("tokens");
-				for(JsonNode token : tokens){
-					AccountTokenValueImpl.Builder tokenValue = AccountTokenValueImpl.newBuilder();
-					tokenValue.setBalance(token.has("balance") ? token.get("balance").asLong() : 0L);
-					tokenValue.setToken(token.has("token") ? token.get("token").asText() : "");
+				ArrayNode tokens = (ArrayNode) accountNode.get("tokens");
+				if(tokens != null && tokens.size() > 0){
+					for(JsonNode token : tokens){
+						AccountTokenValueImpl.Builder tokenValue = AccountTokenValueImpl.newBuilder();
+						tokenValue.setBalance(token.has("balance") ? token.get("balance").asLong() : 0L);
+						tokenValue.setToken(token.has("token") ? token.get("token").asText() : "");
+					}
 				}
 			}
 			
 			if(accountNode.has("cryptos")){
-				ArrayNode cryptos = (ArrayNode) retNode.get("cryptos");
-				for(JsonNode crypto : cryptos){
-					AccountCryptoValueImpl.Builder cryptoValue = AccountCryptoValueImpl.newBuilder();
-					cryptoValue.setSymbol(crypto.has("symbol") ? crypto.get("symbol").asText() : "");
-					if(crypto.has("tokens")){
-						ArrayNode tokens = (ArrayNode) crypto.get("tokens");
-						for(JsonNode token : tokens){
-							AccountCryptoTokenImpl.Builder cryptoToken = AccountCryptoTokenImpl.newBuilder();
-							cryptoToken.setHash(token.has("hash") ? token.get("hash").asText() : "");
-							cryptoToken.setTimestamp(token.has("timestamp") ? token.get("timestamp").asLong() : 0L);
-							cryptoToken.setIndex(token.has("index") ? token.get("index").asInt() : 0);
-							cryptoToken.setTotal(token.has("total") ? token.get("total").asInt() : 0);
-							cryptoToken.setCode(token.has("code") ? token.get("code").asText() : "");
-							cryptoToken.setName(token.has("name") ? token.get("name").asText() : "");
-							cryptoToken.setNonce(token.has("nonce") ? token.get("nonce").asInt() : 0);
-							cryptoToken.setOwnertime(token.has("ownertime") ? token.get("ownertime").asLong() : 0L);
-							
-							cryptoValue.addTokens(cryptoToken);
+				ArrayNode cryptos = (ArrayNode) accountNode.get("cryptos");
+				if(cryptos != null && cryptos.size() > 0){
+					for(JsonNode crypto : cryptos){
+						AccountCryptoValueImpl.Builder cryptoValue = AccountCryptoValueImpl.newBuilder();
+						cryptoValue.setSymbol(crypto.has("symbol") ? crypto.get("symbol").asText() : "");
+						if(crypto.has("tokens")){
+							ArrayNode tokens = (ArrayNode) crypto.get("tokens");
+							for(JsonNode token : tokens){
+								AccountCryptoTokenImpl.Builder cryptoToken = AccountCryptoTokenImpl.newBuilder();
+								cryptoToken.setHash(token.has("hash") ? token.get("hash").asText() : "");
+								cryptoToken.setTimestamp(token.has("timestamp") ? token.get("timestamp").asLong() : 0L);
+								cryptoToken.setIndex(token.has("index") ? token.get("index").asInt() : 0);
+								cryptoToken.setTotal(token.has("total") ? token.get("total").asInt() : 0);
+								cryptoToken.setCode(token.has("code") ? token.get("code").asText() : "");
+								cryptoToken.setName(token.has("name") ? token.get("name").asText() : "");
+								cryptoToken.setNonce(token.has("nonce") ? token.get("nonce").asInt() : 0);
+								cryptoToken.setOwnertime(token.has("ownertime") ? token.get("ownertime").asLong() : 0L);
+								
+								cryptoValue.addTokens(cryptoToken);
+							}
 						}
+						
+						account.addCryptos(cryptoValue);
 					}
-					
-					account.addCryptos(cryptoValue);
 				}
 			}
 			
