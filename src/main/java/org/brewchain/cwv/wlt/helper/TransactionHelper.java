@@ -13,6 +13,7 @@ import org.apache.felix.ipojo.annotations.Provides;
 import org.brewchain.cwv.wlt.dao.Daos;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAddress;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAddressKey;
+import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltContract;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltTx;
 import org.brewchain.wallet.service.Wallet.MultiTransaction;
 import org.brewchain.wallet.service.Wallet.MultiTransactionBody;
@@ -50,6 +51,7 @@ import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.outils.bean.JsonPBFormat;
 import onight.tfw.outils.conf.PropHelper;
 import onight.tfw.outils.serialize.JsonSerializer;
+import onight.tfw.outils.serialize.UUIDGenerator;
 
 /**
  * @author jack
@@ -233,6 +235,10 @@ public class TransactionHelper implements ActorService {
 					ret.setTxHash(retNode.has("txHash") ? retNode.get("txHash").asText() : "");
 					ret.setRetCode(retNode.get("retCode").asInt());
 					ret.setRetMsg(retNode.has("retMsg") ? retNode.get("retMsg").asText() : "");
+					
+					if(retNode.has("txHash")){
+						insertTxHash(retNode.get("txHash").asText());
+					}
 				}
 			}else{
 				log.warn("inputs or outputs is null");
@@ -354,6 +360,10 @@ public class TransactionHelper implements ActorService {
 				ret.setRetCode(1);
 				ret.setRetMsg(retNode.has("retMsg") ? retNode.get("retMsg").asText() : "");
 				ret.setTxHash(retNode.has("txHash") ? retNode.get("txHash").asText() : "");
+				
+				if(retNode.has("contractAddress")){
+					insertContract(retNode.get("contractAddress").asText(), retNode.get("txHash").asText());
+				}
 			}
 			
 		}else{
@@ -531,10 +541,34 @@ public class TransactionHelper implements ActorService {
 	 */
 	public void insertTxHash(String txHash) {
 		CWVWltTx tx = new CWVWltTx();
-		tx.setTxId(txHash);
+		tx.setTxId(UUIDGenerator.generate());
+		tx.setTxHash(txHash);
 		tx.setCreatedTime(new Date());
 		tx.setUpdatedTime(tx.getCreatedTime());
-		daos.wltTxDao.insert(tx);
+		try{
+			daos.wltTxDao.insert(tx);
+		} catch (Exception e){
+			log.error("save tx to db error");
+		}
+	}
+	
+	/**
+	 * @param contractAddress
+	 * @param contractTxHash
+	 * @param contractType
+	 */
+	public void insertContract(String contractAddress, String contractTxHash) {
+		CWVWltContract contract = new CWVWltContract();
+		contract.setContractAddress(contractAddress);
+		contract.setContractTxHash(contractTxHash);
+		contract.setContractId(UUIDGenerator.generate());
+		contract.setCreatedTime(new Date());
+		contract.setUpdatedTime(contract.getCreatedTime());
+		try{
+			daos.wltContractDao.insert(contract);
+		} catch (Exception e){
+			log.error("save contract to db error");
+		}
 	}
 	
 	/*********************************** account 对象转换 **********************************************************/
