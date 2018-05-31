@@ -15,7 +15,7 @@ enum PWLTCommand {
 	TST = 6;//测试接口
 };
 
-//game需要提供的参数 均标注 * 强调
+
 //地址相关
 
 message ReqNewAddress{//创建地址请求
@@ -29,7 +29,7 @@ message RetNewAddress{//创建地址返回
 };
 
 message ReqGetAccount {//查询地址请求
-    string address = 1;//地址 *
+    string address = 1;//地址 
     string type =2;//类型（为以后对接ETH作准备）
 };
 
@@ -76,11 +76,11 @@ message AccountCryptoTokenImpl {//token详情
 
 //合约相关
 message ReqCreateContractTransaction {//创建合约请求
-	MultiTransactionInputImpl input = 1;//合约发起方 *
+	MultiTransactionInputImpl input = 1;//合约发起方 
 	string exdata = 2;//附属信息
 	MultiTransactionSignatureImpl signature = 3;//合约签名
 	repeated string delegate = 4;//代理
-	string data = 5;//合约内容 *
+	string data = 5;//合约内容 
 	int64 timestamp = 6;//时间戳
 };
 
@@ -92,21 +92,21 @@ message RespCreateContractTransaction {//创建合约返回
 };
 
 message ReqDoContractTransaction {//执行合约请求,与创建交易相同。执行合约返回为：RespCreateTransaction
-	MultiTransactionImpl transaction = 1;//交易内容 *
+	MultiTransactionImpl transaction = 1;//交易内容 
 };
 
 //交易相关参数
 message ReqGetTxByHash {//根据交易hash查询交易请求
-	string hexTxHash = 1;//交易hash * 
+	string hexTxHash = 1;//交易hash  
 };
 
 message RespGetTxByHash {//根据交易hash查询交易返回
-	MultiTransactionImpl transaction = 1;//交易详情 *
+	MultiTransactionImpl transaction = 1;//交易详情 
 	int32 retCode = 2;//返回码
 };
 
 message ReqCreateMultiTransaction {//创建交易请求
-	MultiTransactionImpl transaction = 1;//交易内容 *
+	MultiTransactionImpl transaction = 1;//交易内容 
 };
 
 message RespCreateTransaction {//创建交易返回;执行合约返回
@@ -117,38 +117,38 @@ message RespCreateTransaction {//创建交易返回;执行合约返回
 
 message MultiTransactionImpl {//交易详情
     string txHash = 1;//交易hash
-	MultiTransactionBodyImpl txBody = 2;//交易内容体 *
+	MultiTransactionBodyImpl txBody = 2;//交易内容体 
 	MultiTransactionNodeImpl node = 3;//交易节点
 	string status = 4;//交易状态
 };
 
 message MultiTransactionBodyImpl {//交易内容体详情
-	repeated MultiTransactionInputImpl inputs = 1;//发起方 *
-	repeated MultiTransactionOutputImpl outputs = 2;//接收方 *
+	repeated MultiTransactionInputImpl inputs = 1;//发起方 
+	repeated MultiTransactionOutputImpl outputs = 2;//接收方 
 	string exdata = 3;//附属信息
 	repeated MultiTransactionSignatureImpl signatures = 4;//签名
 	repeated string delegate = 5;//代理
-	string data = 6;//合约内容 *
+	string data = 6;//合约内容 
 	int64 timestamp = 7;//时间戳
 };
 
 message MultiTransactionInputImpl {//发起方详情
-	int32 nonce = 1;//交易次数 *
+	int32 nonce = 1;//交易次数 
 	int32 fee = 2;//手续费
 	int32 feeLimit = 3;//。。。。
-	string address = 4;//发起方地址 *
-	int64 amount= 5;//交易金额 *
-	string pubKey = 6;//发起方公钥 *
-	string token = 7;//ERC20 token名字 *
-	string symbol = 8;//ERC721 token标记 *
-	string cryptoToken = 9;//ERC721 token名字 *
+	string address = 4;//发起方地址 
+	int64 amount= 5;//交易金额 
+	string pubKey = 6;//发起方公钥 
+	string token = 7;//ERC20 token名字 
+	string symbol = 8;//ERC721 token标记 
+	string cryptoToken = 9;//ERC721 token名字 
 };
 
 message MultiTransactionOutputImpl {//接收方详情
-	string address= 1;//接收方地址 *
-	int64 amount= 2;//交易金额 *
-	string symbol = 3;//ERC721 token 标记 *
-	string cryptoToken = 4;//ERC721 token名字 *
+	string address= 1;//接收方地址 
+	int64 amount= 2;//交易金额 
+	string symbol = 3;//ERC721 token 标记 
+	string cryptoToken = 4;//ERC721 token名字 
 };
 
 message MultiTransactionSignatureImpl {//签名详情
@@ -163,7 +163,7 @@ message MultiTransactionNodeImpl {//交易节点信息
 	string bcuid = 3;//节点唯一标识
 };
 
-//************** 非 IMPL 对象 *********************//
+// 非 IMPL 对象 //
 
 message MultiTransaction {
 	bytes txHash = 1;
