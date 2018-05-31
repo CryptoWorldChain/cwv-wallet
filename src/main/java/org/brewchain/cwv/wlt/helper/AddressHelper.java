@@ -20,8 +20,6 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.fc.brewchain.bcapi.EncAPI;
 import org.fc.brewchain.bcapi.KeyPairs;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import lombok.Data;
 import lombok.val;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +31,7 @@ import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.outils.conf.PropHelper;
 import onight.tfw.outils.serialize.JsonSerializer;
+import onight.tfw.outils.serialize.UUIDGenerator;
 
 /**
  * @author jack
@@ -79,7 +78,7 @@ public class AddressHelper implements ActorService {
 		//写库操作
 		Date now = new Date();
 		CWVWltAddress addressEntity = new CWVWltAddress();
-		addressEntity.setAddressId(key.getAddress());
+		addressEntity.setAddressId(UUIDGenerator.generate());
 		addressEntity.setAddress(key.getAddress());
 		addressEntity.setBalance(0l);
 		addressEntity.setBcuid(key.getBcuid());
