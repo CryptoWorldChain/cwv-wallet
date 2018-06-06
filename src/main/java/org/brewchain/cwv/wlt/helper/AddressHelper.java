@@ -162,6 +162,8 @@ public class AddressHelper implements ActorService {
 						AccountTokenValueImpl.Builder tokenValue = AccountTokenValueImpl.newBuilder();
 						tokenValue.setBalance(token.has("balance") ? token.get("balance").asLong() : 0L);
 						tokenValue.setToken(token.has("token") ? token.get("token").asText() : "");
+						
+						account.addTokens(tokenValue);
 					}
 				}
 			}

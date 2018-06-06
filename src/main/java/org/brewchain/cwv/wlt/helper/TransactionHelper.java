@@ -12,6 +12,7 @@ import org.apache.felix.ipojo.annotations.Instantiate;
 import org.apache.felix.ipojo.annotations.Provides;
 import org.brewchain.cwv.wlt.dao.Daos;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAddress;
+import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAddressExample;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAddressKey;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltContract;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltTx;
@@ -99,6 +100,8 @@ public class TransactionHelper implements ActorService {
 	/**
 	 * 创建交易
 	 * 
+	 * 如果 erc20 或者 erc721 交易，需要所有发起方的 token 或者 symbol 均相同，即同一笔交易，只能实现一种token的转移
+	 * 
 	 * @param reqBody
 	 * @return
 	 */
@@ -122,11 +125,15 @@ public class TransactionHelper implements ActorService {
 				List<MultiTransactionInputImpl> reqInputsImpl = reqBodyImpl.getInputsList();
 				List<MultiTransactionOutputImpl> reqOutputsImpl = reqBodyImpl.getOutputsList();
 				
+				boolean tokenTx = false;
+				boolean cryptoTokenTx = false;
+				
 				for(MultiTransactionOutputImpl reqOutputImpl : reqOutputsImpl){
 					String reqAddress = reqOutputImpl.getAddress();
 					long reqAmount = reqOutputImpl.getAmount();
 					String reqCryptoToken = reqOutputImpl.getCryptoToken();
 					String reqSymbol = reqOutputImpl.getSymbol();
+
 					
 					if(StringUtils.isBlank(reqAddress)){
 						log.warn("output's address is null");
@@ -166,13 +173,26 @@ public class TransactionHelper implements ActorService {
 					MultiTransactionInput.Builder oInput = MultiTransactionInput.newBuilder();
 					oInput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
 					oInput.setAmount(reqAmount);
-					oInput.setCryptoToken(StringUtils.isNotBlank(reqCryptoToken) ? ByteString.copyFrom(encApi.hexDec(reqCryptoToken)) : ByteString.EMPTY);
+					if(StringUtils.isNotBlank(reqToken)){
+						oInput.setToken(reqToken);
+						tokenTx = true;
+						cryptoTokenTx = false;
+					}else{
+						oInput.setToken("");
+					}
 					oInput.setFee(reqFee);
 					oInput.setFeeLimit(reqFeeLimit);
 					oInput.setNonce(reqNonce);
 					oInput.setPubKey(reqPubKey);
-					oInput.setSymbol(StringUtils.isNotBlank(reqSymbol) ? reqSymbol : "");
-					oInput.setToken(StringUtils.isNotBlank(reqToken) ? reqToken : "");
+					if(StringUtils.isNoneBlank(reqSymbol, reqCryptoToken)){
+						oInput.setSymbol(reqSymbol);
+						oInput.setCryptoToken(ByteString.copyFrom(encApi.hexDec(reqCryptoToken)));
+						tokenTx = false;
+						cryptoTokenTx = true;
+					}else{
+						oInput.setSymbol("");
+						oInput.setCryptoToken(ByteString.EMPTY);
+						}
 					oBody.addInputs(oInput);
 					
 					keys.put(reqPubKey, addressEntity.getPrivateKey());
@@ -189,8 +209,28 @@ public class TransactionHelper implements ActorService {
 				}
 				
 				if(StringUtils.isNotBlank(reqBodyImpl.getData())){
+					//如果 data 不为空， 说明是创建合约交易
 					oBody.setData(ByteString.copyFrom(encApi.hexDec(reqBodyImpl.getData())));
+				} else {
+					if(tokenTx){
+						oBody.setData(ByteString.copyFrom(ByteString.copyFromUtf8("02").toByteArray()));
+					}
+					
+					if(cryptoTokenTx){
+						oBody.setData(ByteString.copyFrom(ByteString.copyFromUtf8("05").toByteArray()));
+					}
 				}
+				
+				/**TODO data 的值
+				 * 
+				 * 创建交易
+				 * 		普通交易		ActuatorDefault					不需要关心data
+				 * 		erc20交易	ActuatorTokenTransaction		data = "02"
+				 * 		erc721交易	ActuatorCryptoTokenTransaction	data = "05"
+				 * 		执行合约		ActuatorDefault					不需要关心data
+				 * 创建合约			ActuatorCreateContract			不需要关心data
+				 * 
+				 */
 				
 				oBody.setTimestamp(System.currentTimeMillis());
 				
@@ -528,8 +568,13 @@ public class TransactionHelper implements ActorService {
 	 * @return
 	 */
 	public CWVWltAddress getAddress(String address){
-		CWVWltAddress addr = daos.wltAddressDao.selectByPrimaryKey(new CWVWltAddressKey(address));
-		if(addr != null){
+		CWVWltAddressExample example = new CWVWltAddressExample();
+		example.createCriteria().andAddressEqualTo(address);
+		Object obj = daos.wltAddressDao.selectOneByExample(example);
+		
+		CWVWltAddress addr = null;
+		if(obj != null){
+			addr = (CWVWltAddress)obj;
 			return addr;
 		}else{
 			return null;
