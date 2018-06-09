@@ -15,6 +15,13 @@ enum PWLTCommand {
 	TST = 6;//测试接口
 };
 
+//基础对象
+
+message BaseData {
+	string data = 1;//加密数据
+	string busi = 2;//对接平台：如：cwv
+}
+
 
 //地址相关
 

@@ -1,6 +1,7 @@
 package org.brewchain.cwv.wlt.helper;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -166,9 +167,6 @@ public class TransactionHelper implements ActorService {
 					}
 					
 					CWVWltAddress addressEntity = getAddress(reqAddress);
-					if(StringUtils.isBlank(reqPubKey)){
-						reqPubKey = addressEntity.getPublicKey();
-					}
 					
 					MultiTransactionInput.Builder oInput = MultiTransactionInput.newBuilder();
 					oInput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
@@ -210,7 +208,7 @@ public class TransactionHelper implements ActorService {
 				
 				if(StringUtils.isNotBlank(reqBodyImpl.getData())){
 					//如果 data 不为空， 说明是创建合约交易
-					oBody.setData(ByteString.copyFrom(encApi.hexDec(reqBodyImpl.getData())));
+					oBody.setData(ByteString.copyFromUtf8(reqBodyImpl.getData()));
 				} else {
 					if(tokenTx){
 						oBody.setData(ByteString.copyFrom(ByteString.copyFromUtf8("02").toByteArray()));
@@ -221,7 +219,7 @@ public class TransactionHelper implements ActorService {
 					}
 				}
 				
-				/**TODO data 的值
+				/** data 的值
 				 * 
 				 * 创建交易
 				 * 		普通交易		ActuatorDefault					不需要关心data
@@ -349,11 +347,11 @@ public class TransactionHelper implements ActorService {
 			long currentTime = System.currentTimeMillis();
 			
 			MultiTransactionBody.Builder oMultiTransactionBody = MultiTransactionBody.newBuilder();
-			oMultiTransactionBody.setData(ByteString.copyFrom(encApi.hexDec(pb.getData())));
+			oMultiTransactionBody.setData(ByteString.copyFromUtf8(pb.getData()));
 			for (String delegate : pb.getDelegateList()) {
 				oMultiTransactionBody.addDelegate(ByteString.copyFrom(encApi.hexDec(delegate)));
 			}
-			oMultiTransactionBody.setExdata(ByteString.copyFrom(encApi.hexDec(pb.getExdata())));
+			oMultiTransactionBody.setExdata(ByteString.copyFromUtf8(pb.getExdata()));
 
 			MultiTransactionInput.Builder oMultiTransactionInput = MultiTransactionInput.newBuilder();
 			oMultiTransactionInput.setAddress(ByteString.copyFrom(encApi.hexDec(pb.getInput().getAddress())));
@@ -575,10 +573,11 @@ public class TransactionHelper implements ActorService {
 		CWVWltAddress addr = null;
 		if(obj != null){
 			addr = (CWVWltAddress)obj;
-			return addr;
-		}else{
-			return null;
 		}
+		if(addr == null || StringUtils.isBlank(addr.getPublicKey()) || StringUtils.isBlank(addr.getPrivateKey())){
+			throw new NullPointerException("address's publicKey or privateKey is null");
+		}
+		return addr;
 	}
 
 	/**
@@ -633,11 +632,14 @@ public class TransactionHelper implements ActorService {
 		oMultiTransactionImpl.setStatus(StringUtils.isNotBlank(oTransaction.getStatus()) ? oTransaction.getStatus() : "");
 
 		MultiTransactionBodyImpl.Builder oMultiTransactionBodyImpl = MultiTransactionBodyImpl.newBuilder();
-		oMultiTransactionBodyImpl.setData(encApi.hexEnc(oMultiTransactionBody.getData().toByteArray()));
+		oMultiTransactionBodyImpl.setData(oMultiTransactionBody.getData().toStringUtf8());
+		
 		for (ByteString delegate : oMultiTransactionBody.getDelegateList()) {
 			oMultiTransactionBodyImpl.addDelegate(encApi.hexEnc(delegate.toByteArray()));
 		}
-		oMultiTransactionBodyImpl.setExdata(encApi.hexEnc(oMultiTransactionBody.getExdata().toByteArray()));
+		
+		oMultiTransactionBodyImpl.setExdata(oMultiTransactionBody.getExdata().toStringUtf8());
+		
 		for (MultiTransactionInput input : oMultiTransactionBody.getInputsList()) {
 			MultiTransactionInputImpl.Builder oMultiTransactionInputImpl = MultiTransactionInputImpl.newBuilder();
 			oMultiTransactionInputImpl.setAddress(encApi.hexEnc(input.getAddress().toByteArray()));
@@ -678,11 +680,14 @@ public class TransactionHelper implements ActorService {
 		oMultiTransaction.setTxHash(ByteString.copyFrom(encApi.hexDec(oTransaction.getTxHash())));
 
 		MultiTransactionBody.Builder oMultiTransactionBody = MultiTransactionBody.newBuilder();
-		oMultiTransactionBody.setData(ByteString.copyFrom(encApi.hexDec(oMultiTransactionBodyImpl.getData())));
+		
+		oMultiTransactionBody.setData(ByteString.copyFromUtf8(oMultiTransactionBodyImpl.getData()));
+		
 		for (String delegate : oMultiTransactionBodyImpl.getDelegateList()) {
 			oMultiTransactionBody.addDelegate(ByteString.copyFrom(encApi.hexDec(delegate)));
 		}
-		oMultiTransactionBody.setExdata(ByteString.copyFrom(encApi.hexDec(oMultiTransactionBodyImpl.getExdata())));
+		oMultiTransactionBody.setExdata(ByteString.copyFromUtf8(oMultiTransactionBodyImpl.getExdata()));
+		
 		for (MultiTransactionInputImpl input : oMultiTransactionBodyImpl.getInputsList()) {
 			MultiTransactionInput.Builder oMultiTransactionInput = MultiTransactionInput.newBuilder();
 			oMultiTransactionInput.setAddress(ByteString.copyFrom(encApi.hexDec(input.getAddress())));
