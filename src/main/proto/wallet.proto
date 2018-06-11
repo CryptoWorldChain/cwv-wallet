@@ -137,6 +137,7 @@ message MultiTransactionBodyImpl {//交易内容体详情
 	repeated string delegate = 5;//代理
 	string data = 6;//合约内容 
 	int64 timestamp = 7;//时间戳
+	int32 type = 8;//交易类型
 };
 
 message MultiTransactionInputImpl {//发起方详情
@@ -187,6 +188,7 @@ message MultiTransactionBody {
 	repeated bytes delegate = 5;
 	bytes data = 6;
 	int64 timestamp = 7;
+	int32 type = 8;
 }
 
 message MultiTransactionInput {

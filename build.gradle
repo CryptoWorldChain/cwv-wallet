@@ -3,6 +3,7 @@ buildscript {
 		classpath "onight.osgi:zpp-gradle:3.0.0"
 		classpath "org.brewchain:org.brewchain.cwv-wallet-orm:1.0.4" 
 		classpath "org.brewchain:org.brewchain.bcapi:3.3.3"
+		classpath "org.brewchain:org.brewchain.evmapi:1.0.0"
 	}
 }
 
@@ -19,6 +20,7 @@ dependencies {
 	compile ("org.brewchain:org.brewchain.cwv-wallet-orm:1.0.4")
 	compile ("org.brewchain:org.brewchain.bcapi:3.3.3")
 	compile 'com.fasterxml.jackson:jackson-parent:2.5'
+	compile ("org.brewchain:org.brewchain.evmapi:1.0.0")
 }
 
 jar {

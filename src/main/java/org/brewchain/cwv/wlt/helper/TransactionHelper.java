@@ -1,7 +1,6 @@
 package org.brewchain.cwv.wlt.helper;
 
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -14,9 +13,11 @@ import org.apache.felix.ipojo.annotations.Provides;
 import org.brewchain.cwv.wlt.dao.Daos;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAddress;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAddressExample;
-import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAddressKey;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltContract;
+import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltParameter;
+import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltParameterExample;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltTx;
+import org.brewchain.cwv.wlt.enums.TransTypeEnum;
 import org.brewchain.wallet.service.Wallet.MultiTransaction;
 import org.brewchain.wallet.service.Wallet.MultiTransactionBody;
 import org.brewchain.wallet.service.Wallet.MultiTransactionBodyImpl;
@@ -52,7 +53,6 @@ import onight.tfw.otransio.api.IPacketSender;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.outils.bean.JsonPBFormat;
-import onight.tfw.outils.conf.PropHelper;
 import onight.tfw.outils.serialize.JsonSerializer;
 import onight.tfw.outils.serialize.UUIDGenerator;
 
@@ -78,25 +78,11 @@ public class TransactionHelper implements ActorService {
 	@ActorRequire(name = "daos", scope = "global")
 	Daos daos;
 
-	private static PropHelper props = new PropHelper(null);
-	
 	ObjectMapper mapper = new ObjectMapper();
 
-	private static String CREATE_TRANSACTION = "http://127.0.0.1:8000/fbs/txt/pbmtx.do";
-	private static String CREATE_CONTRACT = "http://127.0.0.1:8000/fbs/txt/pbsct.do";
-	private static String QUERY_TRANSACTION = "http://127.0.0.1:8000/fbs/txt/pbgtx.do";
-	static {
-		CREATE_TRANSACTION = props.get("create_transaction", "http://127.0.0.1:8000/fbs/txt/pbmtx.do");
-		CREATE_CONTRACT = props.get("create_contract", "http://127.0.0.1:8000/fbs/txt/pbsct.do");
-		QUERY_TRANSACTION = props.get("query_transaction", "http://127.0.0.1:8000/fbs/txt/pbgtx.do");
-
-		/**
-		 * runtime配置参数：
-		 * create_transaction=http://127.0.0.1:8000/fbs/txt/pbmtx.do
-		 * create_contract=http://127.0.0.1:8000/fbs/txt/pbsct.do
-		 * query_transaction=http://127.0.0.1:8000/fbs/txt/pbgtx.do
-		 */
-	}
+	private static String CREATE_TRANSACTION = "createTransactionURL";
+	private static String CREATE_CONTRACT = "createContractURL";
+	private static String QUERY_TRANSACTION = "queryTransaction";
 
 	/**
 	 * 创建交易
@@ -125,9 +111,6 @@ public class TransactionHelper implements ActorService {
 				
 				List<MultiTransactionInputImpl> reqInputsImpl = reqBodyImpl.getInputsList();
 				List<MultiTransactionOutputImpl> reqOutputsImpl = reqBodyImpl.getOutputsList();
-				
-				boolean tokenTx = false;
-				boolean cryptoTokenTx = false;
 				
 				for(MultiTransactionOutputImpl reqOutputImpl : reqOutputsImpl){
 					String reqAddress = reqOutputImpl.getAddress();
@@ -173,8 +156,7 @@ public class TransactionHelper implements ActorService {
 					oInput.setAmount(reqAmount);
 					if(StringUtils.isNotBlank(reqToken)){
 						oInput.setToken(reqToken);
-						tokenTx = true;
-						cryptoTokenTx = false;
+						oBody.setType(TransTypeEnum.TYPE_TokenTransaction.value());
 					}else{
 						oInput.setToken("");
 					}
@@ -185,8 +167,7 @@ public class TransactionHelper implements ActorService {
 					if(StringUtils.isNoneBlank(reqSymbol, reqCryptoToken)){
 						oInput.setSymbol(reqSymbol);
 						oInput.setCryptoToken(ByteString.copyFrom(encApi.hexDec(reqCryptoToken)));
-						tokenTx = false;
-						cryptoTokenTx = true;
+						oBody.setType(TransTypeEnum.TYPE_CryptoTokenTransaction.value());
 					}else{
 						oInput.setSymbol("");
 						oInput.setCryptoToken(ByteString.EMPTY);
@@ -209,26 +190,7 @@ public class TransactionHelper implements ActorService {
 				if(StringUtils.isNotBlank(reqBodyImpl.getData())){
 					//如果 data 不为空， 说明是创建合约交易
 					oBody.setData(ByteString.copyFromUtf8(reqBodyImpl.getData()));
-				} else {
-					if(tokenTx){
-						oBody.setData(ByteString.copyFrom(ByteString.copyFromUtf8("02").toByteArray()));
-					}
-					
-					if(cryptoTokenTx){
-						oBody.setData(ByteString.copyFrom(ByteString.copyFromUtf8("05").toByteArray()));
-					}
 				}
-				
-				/** data 的值
-				 * 
-				 * 创建交易
-				 * 		普通交易		ActuatorDefault					不需要关心data
-				 * 		erc20交易	ActuatorTokenTransaction		data = "02"
-				 * 		erc721交易	ActuatorCryptoTokenTransaction	data = "05"
-				 * 		执行合约		ActuatorDefault					不需要关心data
-				 * 创建合约			ActuatorCreateContract			不需要关心data
-				 * 
-				 */
 				
 				oBody.setTimestamp(System.currentTimeMillis());
 				
@@ -260,23 +222,29 @@ public class TransactionHelper implements ActorService {
 				
 				JsonFormat jsonFormat = new JsonFormat();
 				String jsonView = jsonFormat.printToString(oCreate.build());
-				FramePacket fposttx = PacketHelper.buildUrlFromJson(jsonView, "POST", CREATE_TRANSACTION);
-				val qryTxRet = sender.send(fposttx, 30000);
-				JsonNode retNode = null;
-				try{
-					retNode = mapper.readTree(qryTxRet.getBody());
-				} catch (Exception e){
-					log.error("parse create transaction return error : " + e.getMessage());
-				}
-				
-				if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){
-					ret = RespCreateTransaction.newBuilder();
-					ret.setTxHash(retNode.has("txHash") ? retNode.get("txHash").asText() : "");
-					ret.setRetCode(retNode.get("retCode").asInt());
-					ret.setRetMsg(retNode.has("retMsg") ? retNode.get("retMsg").asText() : "");
+				CWVWltParameterExample parameterExample = new CWVWltParameterExample();
+				parameterExample.createCriteria().andParamCodeEqualTo(CREATE_TRANSACTION);
+				Object parameterObj = daos.wltParameterDao.selectOneByExample(parameterExample);
+				if(parameterObj != null){
+					CWVWltParameter parameter = (CWVWltParameter)parameterObj;
+					FramePacket fposttx = PacketHelper.buildUrlFromJson(jsonView, "POST", parameter.getParamValue());
+					val qryTxRet = sender.send(fposttx, 30000);
+					JsonNode retNode = null;
+					try{
+						retNode = mapper.readTree(qryTxRet.getBody());
+					} catch (Exception e){
+						log.error("parse create transaction return error : " + e.getMessage());
+					}
 					
-					if(retNode.has("txHash")){
-						insertTxHash(retNode.get("txHash").asText());
+					if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){
+						ret = RespCreateTransaction.newBuilder();
+						ret.setTxHash(retNode.has("txHash") ? retNode.get("txHash").asText() : "");
+						ret.setRetCode(retNode.get("retCode").asInt());
+						ret.setRetMsg(retNode.has("retMsg") ? retNode.get("retMsg").asText() : "");
+						
+						if(retNode.has("txHash")){
+							insertTxHash(retNode.get("txHash").asText());
+						}
 					}
 				}
 			}else{
@@ -302,18 +270,24 @@ public class TransactionHelper implements ActorService {
 		param.put("hexTxHash", txHash);
 
 		String sendJson = JsonSerializer.getInstance().formatToString(param);
-		FramePacket fposttx = PacketHelper.buildUrlFromJson(sendJson, "POST", QUERY_TRANSACTION);
-		val qryTxRet = sender.send(fposttx, 30000);
-		
-		JsonNode retNode = null;
-		try{
-			retNode = mapper.readTree(qryTxRet.getBody());
-		} catch(Exception e){
-			log.error("parse query transaction error : " + e.getMessage());
-		}
-		
-		if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){
-			ret = parseJson2RespGetTxByHash(retNode);
+		CWVWltParameterExample parameterExample = new CWVWltParameterExample();
+		parameterExample.createCriteria().andParamCodeEqualTo(QUERY_TRANSACTION);
+		Object parameterObj = daos.wltParameterDao.selectOneByExample(parameterExample);
+		if(parameterObj != null){
+			CWVWltParameter parameter = (CWVWltParameter)parameterObj;
+			FramePacket fposttx = PacketHelper.buildUrlFromJson(sendJson, "POST", parameter.getParamValue());
+			val qryTxRet = sender.send(fposttx, 30000);
+			
+			JsonNode retNode = null;
+			try{
+				retNode = mapper.readTree(qryTxRet.getBody());
+			} catch(Exception e){
+				log.error("parse query transaction error : " + e.getMessage());
+			}
+			
+			if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){
+				ret = parseJson2RespGetTxByHash(retNode);
+			}
 		}
 		
 		return ret;
@@ -383,28 +357,34 @@ public class TransactionHelper implements ActorService {
 			
 			JsonPBFormat jsonFormat = new JsonPBFormat();
 			String jsonView = jsonFormat.printToString(reqCreate.build());
-			FramePacket fposttx = PacketHelper.buildUrlFromJson(jsonView, "POST", CREATE_CONTRACT);
-			val crtTxRet = sender.send(fposttx, 30000);
-			
-			JsonNode retNode = null;
-			try {
-				retNode = mapper.readTree(crtTxRet.getBody());
-			} catch (IOException e) {
-				log.error("parse ret error : " + new String(crtTxRet.getBody()));
-			}
-			
-			if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 0){
-				ret = RespCreateContractTransaction.newBuilder();
-				ret.setContractAddress(retNode.has("contractAddress") ? retNode.get("contractAddress").asText() : "");
-				ret.setRetCode(1);
-				ret.setRetMsg(retNode.has("retMsg") ? retNode.get("retMsg").asText() : "");
-				ret.setTxHash(retNode.has("txHash") ? retNode.get("txHash").asText() : "");
+			CWVWltParameterExample parameterExample = new CWVWltParameterExample();
+			parameterExample.createCriteria().andParamCodeEqualTo(CREATE_CONTRACT);
+			Object parameterObj = daos.wltParameterDao.selectOneByExample(parameterExample);
+			if(parameterObj != null){
+				CWVWltParameter parameter = (CWVWltParameter)parameterObj;
+				FramePacket fposttx = PacketHelper.buildUrlFromJson(jsonView, "POST", parameter.getParamValue());
+				val crtTxRet = sender.send(fposttx, 30000);
 				
-				if(retNode.has("contractAddress")){
-					insertContract(retNode.get("contractAddress").asText(), retNode.get("txHash").asText());
+				JsonNode retNode = null;
+				try {
+					retNode = mapper.readTree(crtTxRet.getBody());
+				} catch (IOException e) {
+					log.error("parse ret error : " + new String(crtTxRet.getBody()));
 				}
+				
+				if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 0){
+					ret = RespCreateContractTransaction.newBuilder();
+					ret.setContractAddress(retNode.has("contractAddress") ? retNode.get("contractAddress").asText() : "");
+					ret.setRetCode(1);
+					ret.setRetMsg(retNode.has("retMsg") ? retNode.get("retMsg").asText() : "");
+					ret.setTxHash(retNode.has("txHash") ? retNode.get("txHash").asText() : "");
+					
+					if(retNode.has("contractAddress")){
+						insertContract(retNode.get("contractAddress").asText(), retNode.get("txHash").asText());
+					}
+				}
+				
 			}
-			
 		}else{
 			log.warn("input or data is null");
 		}

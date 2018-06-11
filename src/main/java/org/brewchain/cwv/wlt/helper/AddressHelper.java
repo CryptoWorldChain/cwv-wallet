@@ -9,6 +9,8 @@ import org.apache.felix.ipojo.annotations.Instantiate;
 import org.apache.felix.ipojo.annotations.Provides;
 import org.brewchain.cwv.wlt.dao.Daos;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltAddress;
+import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltParameter;
+import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltParameterExample;
 import org.brewchain.wallet.service.Wallet.AccountCryptoTokenImpl;
 import org.brewchain.wallet.service.Wallet.AccountCryptoValueImpl;
 import org.brewchain.wallet.service.Wallet.AccountTokenValueImpl;
@@ -55,11 +57,12 @@ public class AddressHelper implements ActorService {
 	@ActorRequire(name = "daos", scope = "global")
 	Daos daos;
 
-	private static PropHelper props = new PropHelper(null);
+	private final static String QUERY_ADDRESS = "queryAddressURL";
 
-	private static String QUERY_ADDRESS = "http://127.0.0.1:8000/fbs/act/pbgac.do";
+	private static PropHelper props = new PropHelper(null);
+//	private static String QUERY_ADDRESS = "http://127.0.0.1:8000/fbs/act/pbgac.do";
 	static {
-		QUERY_ADDRESS = props.get("query_address", "http://127.0.0.1:8000/fbs/act/pbgac.do");
+//		QUERY_ADDRESS = props.get("query_address", "http://127.0.0.1:8000/fbs/act/pbgac.do");
 	}
 
 	/**
@@ -109,18 +112,24 @@ public class AddressHelper implements ActorService {
 		params.put("address", address);
 		String sendJson = JsonSerializer.formatToString(params);
 
-		FramePacket fposttx = PacketHelper.buildUrlFromJson(sendJson, "POST", QUERY_ADDRESS);
-		val txretReg = sender.send(fposttx, 30000);
-		JsonNode retNode = null;
-		ObjectMapper mapper = new ObjectMapper();
-		try{
-			retNode = mapper.readTree(txretReg.getBody());
-		} catch (Exception e){
-			log.error("parse query address error : " + e.getMessage());
-		}
-		
-		if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){
-			account = parseJson2AccountValueImpl(retNode);
+		CWVWltParameterExample parameterExample = new CWVWltParameterExample();
+		parameterExample.createCriteria().andParamCodeEqualTo(QUERY_ADDRESS);
+		Object parameterObj = daos.wltParameterDao.selectOneByExample(parameterExample);
+		if(parameterObj != null){
+			CWVWltParameter parameter = (CWVWltParameter)parameterObj;
+			FramePacket fposttx = PacketHelper.buildUrlFromJson(sendJson, "POST", parameter.getParamValue());
+			val txretReg = sender.send(fposttx, 30000);
+			JsonNode retNode = null;
+			ObjectMapper mapper = new ObjectMapper();
+			try{
+				retNode = mapper.readTree(txretReg.getBody());
+			} catch (Exception e){
+				log.error("parse query address error : " + e.getMessage());
+			}
+			
+			if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){
+				account = parseJson2AccountValueImpl(retNode);
+			}
 		}
 		
 		return account;
