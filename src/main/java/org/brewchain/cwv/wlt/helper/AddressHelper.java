@@ -155,6 +155,8 @@ public class AddressHelper implements ActorService {
 			account.setMax(accountNode.has("max") ? accountNode.get("max").asLong() : 0L);
 			account.setAcceptMax(accountNode.has("acceptMax") ? accountNode.get("acceptMax").asLong() : 0L);
 			account.setAcceptLimit(accountNode.has("acceptLimit") ? accountNode.get("acceptLimit").asInt() : 0);
+			account.setCode(accountNode.has("code") ? accountNode.get("code").asText() : "");
+			account.setStorage(accountNode.has("storage") ? accountNode.get("storage").asText() : "");
 			if(accountNode.has("address")){
 				ArrayNode addrs = (ArrayNode) accountNode.get("address");
 				if(addrs != null && addrs.size() > 0){
