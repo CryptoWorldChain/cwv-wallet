@@ -199,7 +199,7 @@ message MultiTransactionInput {
 	int32 feeLimit = 3;
 	bytes address = 4;
 	int64 amount= 5;
-	string pubKey = 6;
+	bytes pubKey = 6;
 	string token = 7;
 	string symbol = 8;
 	bytes cryptoToken = 9;
@@ -213,8 +213,8 @@ message MultiTransactionOutput {
 }
 
 message MultiTransactionSignature {
-	string signature = 1;
-	string pubKey = 2;
+	bytes signature = 1;
+	bytes pubKey = 2;
 }
 
 message MultiTransactionNode {
@@ -226,6 +226,5 @@ message MultiTransactionNode {
 message Test {
 	bool flag = 1;
 };
-
 
 
