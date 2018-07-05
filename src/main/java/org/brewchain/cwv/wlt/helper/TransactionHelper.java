@@ -171,7 +171,10 @@ public class TransactionHelper implements ActorService {
 					}else{
 						oInput.setSymbol("");
 						oInput.setCryptoToken(ByteString.EMPTY);
-						}
+					}
+					if(reqBodyImpl.getType()!=0){
+						oBody.setType(reqBodyImpl.getType());
+					}
 					oBody.addInputs(oInput);
 					
 					keys.put(reqPubKey, addressEntity.getPrivateKey());
@@ -484,11 +487,11 @@ public class TransactionHelper implements ActorService {
 			long currentTime = System.currentTimeMillis();
 			MultiTransaction.Builder oMultiTransaction = MultiTransaction.newBuilder();
 			MultiTransactionBody.Builder oMultiTransactionBody = MultiTransactionBody.newBuilder();
-			oMultiTransactionBody.setData(ByteString.copyFromUtf8(pb.getData()));
+			
 			for (String delegate : pb.getDelegateList()) {
 				oMultiTransactionBody.addDelegate(ByteString.copyFrom(encApi.hexDec(delegate)));
 			}
-			oMultiTransactionBody.setType(TransTypeEnum.TYPE_CreateContract.value());
+			
 //			oMultiTransactionBody.setExdata(ByteString.copyFromUtf8(pb.getExdata()));
 
 			MultiTransactionInput.Builder oMultiTransactionInput = MultiTransactionInput.newBuilder();
@@ -501,6 +504,8 @@ public class TransactionHelper implements ActorService {
 //			oMultiTransactionInput.setToken(pb.getInput().getToken());
 			oMultiTransactionBody.addInputs(oMultiTransactionInput);
 			oMultiTransactionBody.setTimestamp(currentTime);
+			oMultiTransactionBody.setType(TransTypeEnum.TYPE_CreateContract.value());
+			oMultiTransactionBody.setData(ByteString.copyFrom(encApi.hexDec(pb.getData())));
 			
 			MultiTransactionSignature.Builder oMultiTransactionSignature = MultiTransactionSignature.newBuilder();
 			oMultiTransactionSignature.setPubKey(ByteString.copyFrom(encApi.hexDec(addressEntity.getPublicKey())));
@@ -545,7 +550,7 @@ public class TransactionHelper implements ActorService {
 					log.error("parse ret error : " + new String(crtTxRet.getBody()));
 				}
 				
-				if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 0){
+				if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){
 					ret = RespCreateContractTransaction.newBuilder();
 					ret.setContractAddress(retNode.has("contractHash") ? retNode.get("contractHash").asText() : "");
 					ret.setRetCode(1);
@@ -571,6 +576,7 @@ public class TransactionHelper implements ActorService {
 	 */
 	public RespCreateTransaction.Builder doContract(ReqDoContractTransaction pb) {
 		// 执行合约走的是创建交易的流程，所以结构需要与创建交易保持一致，参与合约的地址为 input，合约地址为 output
+		pb.getTransaction().toBuilder().getTxBody().toBuilder().setType(TransTypeEnum.TYPE_CallContract.value());
 		RespCreateTransaction.Builder ret = createTransaction(pb.getTransaction());
 
 		return ret;
@@ -785,8 +791,8 @@ public class TransactionHelper implements ActorService {
 		oMultiTransactionImpl.setStatus(StringUtils.isNotBlank(oTransaction.getStatus()) ? oTransaction.getStatus() : "");
 
 		MultiTransactionBodyImpl.Builder oMultiTransactionBodyImpl = MultiTransactionBodyImpl.newBuilder();
-		oMultiTransactionBodyImpl.setData(oMultiTransactionBody.getData().toStringUtf8());
-		
+		oMultiTransactionBodyImpl.setData(encApi.hexEnc(oMultiTransactionBody.getData().toByteArray()));
+		oMultiTransactionBodyImpl.setType(oMultiTransactionBody.getType());
 		for (ByteString delegate : oMultiTransactionBody.getDelegateList()) {
 			oMultiTransactionBodyImpl.addDelegate(encApi.hexEnc(delegate.toByteArray()));
 		}
