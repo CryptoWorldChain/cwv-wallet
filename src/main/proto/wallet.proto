@@ -49,7 +49,7 @@ message RespGetAccount {//查询地址返回
 
 message AccountValueImpl {//地址详细信息
     int32 nonce = 1;//交易次数
-    int64 balance = 2;//账户余额
+    string balance = 2;//账户余额
     string pubKey = 3;//账户公钥
     int64 max = 4;//
     int64 acceptMax = 5;//
@@ -63,7 +63,7 @@ message AccountValueImpl {//地址详细信息
 
 message AccountTokenValueImpl {//ERC20 token详情
     string token = 1;//token
-    int64 balance = 2;//账户余额
+    string balance = 2;//账户余额
 };
 
 message AccountCryptoValueImpl {//ERC721 token详情
@@ -129,6 +129,7 @@ message MultiTransactionImpl {//交易详情
 	MultiTransactionBodyImpl txBody = 2;//交易内容体 
 	MultiTransactionNodeImpl node = 3;//交易节点
 	string status = 4;//交易状态
+	string result = 5;//合约返回结果
 };
 
 message MultiTransactionBodyImpl {//交易内容体详情

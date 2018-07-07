@@ -131,7 +131,7 @@ public class TransactionHelper implements ActorService {
 					
 					MultiTransactionOutput.Builder oOutput = MultiTransactionOutput.newBuilder();
 					oOutput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
-					oOutput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(new BigInteger(reqAmount.toString()))));
+					oOutput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(reqAmount.toBigInteger())));
 					oOutput.setCryptoToken(StringUtils.isNotBlank(reqCryptoToken) ? ByteString.copyFrom(encApi.hexDec(reqCryptoToken)) : ByteString.EMPTY);
 					oOutput.setSymbol(StringUtils.isNotBlank(reqSymbol) ? reqSymbol : "");
 					oBody.addOutputs(oOutput);
@@ -158,7 +158,7 @@ public class TransactionHelper implements ActorService {
 					
 					MultiTransactionInput.Builder oInput = MultiTransactionInput.newBuilder();
 					oInput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
-					oInput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(new BigInteger(reqAmount.toString()))));
+					oInput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(reqAmount.toBigInteger())));
 					if(StringUtils.isNotBlank(reqToken)){
 						oInput.setToken(reqToken);
 						oBody.setType(TransTypeEnum.TYPE_TokenTransaction.value());
@@ -307,7 +307,7 @@ public class TransactionHelper implements ActorService {
 					
 					MultiTransactionOutput.Builder oOutput = MultiTransactionOutput.newBuilder();
 					oOutput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
-					oOutput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(new BigInteger(reqAmount.toString()))));
+					oOutput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(reqAmount.toBigInteger())));
 					oOutput.setCryptoToken(StringUtils.isNotBlank(reqCryptoToken) ? ByteString.copyFrom(encApi.hexDec(reqCryptoToken)) : ByteString.EMPTY);
 					oOutput.setSymbol(StringUtils.isNotBlank(reqSymbol) ? reqSymbol : "");
 					oBody.addOutputs(oOutput);
@@ -334,7 +334,7 @@ public class TransactionHelper implements ActorService {
 					
 					MultiTransactionInput.Builder oInput = MultiTransactionInput.newBuilder();
 					oInput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
-					oInput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(new BigInteger(reqAmount.toString()))));
+					oInput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(reqAmount.toBigInteger())));
 					if(StringUtils.isNotBlank(reqToken)){
 						oInput.setToken(reqToken);
 						oBody.setType(TransTypeEnum.TYPE_TokenTransaction.value());
@@ -481,12 +481,11 @@ public class TransactionHelper implements ActorService {
 		 */
 		
 		RespCreateContractTransaction.Builder ret = null;
-		ReqCreateContractTransaction.Builder reqCreate = ReqCreateContractTransaction.newBuilder();
 		
 		MultiTransactionInputImpl reqInputImpl = pb.getInput();
 		if(reqInputImpl != null){
 			String reqAddress = reqInputImpl.getAddress();
-			BigDecimal reqAmount = ws.multiply(new BigDecimal(pb.getInput().getAmount());
+			BigDecimal reqAmount = ws.multiply(new BigDecimal(pb.getInput().getAmount()));
 			CWVWltAddress addressEntity = getAddress(reqAddress);
 			
 			long currentTime = System.currentTimeMillis();
@@ -501,7 +500,7 @@ public class TransactionHelper implements ActorService {
 
 			MultiTransactionInput.Builder oMultiTransactionInput = MultiTransactionInput.newBuilder();
 			oMultiTransactionInput.setAddress(ByteString.copyFrom(encApi.hexDec(pb.getInput().getAddress())));
-			oMultiTransactionInput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes()))));
+			oMultiTransactionInput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(reqAmount.toBigInteger())));
 //			oMultiTransactionInput.setCryptoToken(ByteString.copyFrom(encApi.hexDec(pb.getInput().getCryptoToken())));
 			oMultiTransactionInput.setFee(pb.getInput().getFee());
 			oMultiTransactionInput.setNonce(pb.getInput().getNonce());
@@ -807,7 +806,7 @@ public class TransactionHelper implements ActorService {
 		for (MultiTransactionInput input : oMultiTransactionBody.getInputsList()) {
 			MultiTransactionInputImpl.Builder oMultiTransactionInputImpl = MultiTransactionInputImpl.newBuilder();
 			oMultiTransactionInputImpl.setAddress(encApi.hexEnc(input.getAddress().toByteArray()));
-			oMultiTransactionInputImpl.setAmount(input.getAmount());
+			oMultiTransactionInputImpl.setAmount(ByteUtil.bytesToIp(input.getAmount().toByteArray()));
 			oMultiTransactionInputImpl.setCryptoToken(encApi.hexEnc(input.getCryptoToken().toByteArray()));
 			oMultiTransactionInputImpl.setFee(input.getFee());
 			oMultiTransactionInputImpl.setNonce(input.getNonce());
@@ -819,7 +818,7 @@ public class TransactionHelper implements ActorService {
 		for (MultiTransactionOutput output : oMultiTransactionBody.getOutputsList()) {
 			MultiTransactionOutputImpl.Builder oMultiTransactionOutputImpl = MultiTransactionOutputImpl.newBuilder();
 			oMultiTransactionOutputImpl.setAddress(encApi.hexEnc(output.getAddress().toByteArray()));
-			oMultiTransactionOutputImpl.setAmount(output.getAmount());
+			oMultiTransactionOutputImpl.setAmount(ByteUtil.bytesToIp(output.getAmount().toByteArray()));
 			oMultiTransactionOutputImpl.setCryptoToken(encApi.hexEnc(output.getCryptoToken().toByteArray()));
 			oMultiTransactionOutputImpl.setSymbol(output.getSymbol());
 			oMultiTransactionBodyImpl.addOutputs(oMultiTransactionOutputImpl);
@@ -855,7 +854,7 @@ public class TransactionHelper implements ActorService {
 		for (MultiTransactionInputImpl input : oMultiTransactionBodyImpl.getInputsList()) {
 			MultiTransactionInput.Builder oMultiTransactionInput = MultiTransactionInput.newBuilder();
 			oMultiTransactionInput.setAddress(ByteString.copyFrom(encApi.hexDec(input.getAddress())));
-			oMultiTransactionInput.setAmount(input.getAmount());
+			oMultiTransactionInput.setAmount(ByteString.copyFrom(encApi.hexDec(input.getAmount())));
 			oMultiTransactionInput.setCryptoToken(ByteString.copyFrom(encApi.hexDec(input.getCryptoToken())));
 			oMultiTransactionInput.setFee(input.getFee());
 			oMultiTransactionInput.setNonce(input.getNonce());
@@ -867,7 +866,7 @@ public class TransactionHelper implements ActorService {
 		for (MultiTransactionOutputImpl output : oMultiTransactionBodyImpl.getOutputsList()) {
 			MultiTransactionOutput.Builder oMultiTransactionOutput = MultiTransactionOutput.newBuilder();
 			oMultiTransactionOutput.setAddress(ByteString.copyFrom(encApi.hexDec(output.getAddress())));
-			oMultiTransactionOutput.setAmount(output.getAmount());
+			oMultiTransactionOutput.setAmount(ByteString.copyFrom(encApi.hexDec(output.getAmount())));
 			oMultiTransactionOutput.setCryptoToken(ByteString.copyFrom(encApi.hexDec(output.getCryptoToken())));
 			oMultiTransactionOutput.setSymbol(output.getSymbol());
 			oMultiTransactionBody.addOutputs(oMultiTransactionOutput);

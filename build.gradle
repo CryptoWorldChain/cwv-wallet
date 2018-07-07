@@ -31,7 +31,7 @@ dependencies {
 
 jar {
 	manifest{
-		attributes( 'Import-Ignore':'com.fasterxml.jackson')
+		attributes( 'Import-Ignore':'com.fasterxml.jackson,org.spongycastle')
 		
 	}
 }
