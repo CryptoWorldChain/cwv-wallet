@@ -602,7 +602,7 @@ public class TransactionHelper implements ActorService {
 				transaction.setNode(getMultiTransactionNode(retNode.get("node")));
 			transaction.setStatus(tNode.has("status") ? tNode.get("status").asText() : "");
 			transaction.setTxHash(tNode.has("txHash") ? tNode.get("txHash").asText() : "");
-			
+			transaction.setResult(tNode.has("result") ? tNode.get("result").asText() : "");
 			ret.setTransaction(transaction);
 		}
 		ret.setRetCode(retNode.get("retCode").asInt());
