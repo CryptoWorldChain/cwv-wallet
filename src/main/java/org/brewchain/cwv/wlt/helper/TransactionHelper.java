@@ -1,6 +1,8 @@
 package org.brewchain.cwv.wlt.helper;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,6 +20,7 @@ import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltParameter;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltParameterExample;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltTx;
 import org.brewchain.cwv.wlt.enums.TransTypeEnum;
+import org.brewchain.cwv.wlt.utils.ByteUtil;
 import org.brewchain.wallet.service.Wallet.MultiTransaction;
 import org.brewchain.wallet.service.Wallet.MultiTransactionBody;
 import org.brewchain.wallet.service.Wallet.MultiTransactionBodyImpl;
@@ -79,6 +82,8 @@ public class TransactionHelper implements ActorService {
 	Daos daos;
 
 	ObjectMapper mapper = new ObjectMapper();
+	
+	BigDecimal ws = new BigDecimal("100000000000000000");
 
 	private static String CREATE_TRANSACTION = "createTransactionURL";
 	private static String CREATE_CONTRACT = "createContractURL";
@@ -114,7 +119,7 @@ public class TransactionHelper implements ActorService {
 				
 				for(MultiTransactionOutputImpl reqOutputImpl : reqOutputsImpl){
 					String reqAddress = reqOutputImpl.getAddress();
-					long reqAmount = reqOutputImpl.getAmount();
+					BigDecimal reqAmount = ws.multiply(new BigDecimal(reqOutputImpl.getAmount()));
 					String reqCryptoToken = reqOutputImpl.getCryptoToken();
 					String reqSymbol = reqOutputImpl.getSymbol();
 
@@ -126,7 +131,7 @@ public class TransactionHelper implements ActorService {
 					
 					MultiTransactionOutput.Builder oOutput = MultiTransactionOutput.newBuilder();
 					oOutput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
-					oOutput.setAmount(reqAmount);
+					oOutput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(new BigInteger(reqAmount.toString()))));
 					oOutput.setCryptoToken(StringUtils.isNotBlank(reqCryptoToken) ? ByteString.copyFrom(encApi.hexDec(reqCryptoToken)) : ByteString.EMPTY);
 					oOutput.setSymbol(StringUtils.isNotBlank(reqSymbol) ? reqSymbol : "");
 					oBody.addOutputs(oOutput);
@@ -135,7 +140,7 @@ public class TransactionHelper implements ActorService {
 				Map<String, String> keys = new HashMap<String, String>();
 				for(MultiTransactionInputImpl reqInputImpl : reqInputsImpl){
 					String reqAddress = reqInputImpl.getAddress();
-					long reqAmount = reqInputImpl.getAmount();
+					BigDecimal reqAmount =ws.multiply(new BigDecimal(reqInputImpl.getAmount()));
 					String reqCryptoToken = reqInputImpl.getCryptoToken();
 					int reqFee = reqInputImpl.getFee();
 					int reqFeeLimit = reqInputImpl.getFeeLimit();
@@ -153,7 +158,7 @@ public class TransactionHelper implements ActorService {
 					
 					MultiTransactionInput.Builder oInput = MultiTransactionInput.newBuilder();
 					oInput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
-					oInput.setAmount(reqAmount);
+					oInput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(new BigInteger(reqAmount.toString()))));
 					if(StringUtils.isNotBlank(reqToken)){
 						oInput.setToken(reqToken);
 						oBody.setType(TransTypeEnum.TYPE_TokenTransaction.value());
@@ -290,7 +295,7 @@ public class TransactionHelper implements ActorService {
 				
 				for(MultiTransactionOutputImpl reqOutputImpl : reqOutputsImpl){
 					String reqAddress = reqOutputImpl.getAddress();
-					long reqAmount = reqOutputImpl.getAmount();
+					BigDecimal reqAmount = ws.multiply(new BigDecimal(reqOutputImpl.getAmount()));
 					String reqCryptoToken = reqOutputImpl.getCryptoToken();
 					String reqSymbol = reqOutputImpl.getSymbol();
 
@@ -302,7 +307,7 @@ public class TransactionHelper implements ActorService {
 					
 					MultiTransactionOutput.Builder oOutput = MultiTransactionOutput.newBuilder();
 					oOutput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
-					oOutput.setAmount(reqAmount);
+					oOutput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(new BigInteger(reqAmount.toString()))));
 					oOutput.setCryptoToken(StringUtils.isNotBlank(reqCryptoToken) ? ByteString.copyFrom(encApi.hexDec(reqCryptoToken)) : ByteString.EMPTY);
 					oOutput.setSymbol(StringUtils.isNotBlank(reqSymbol) ? reqSymbol : "");
 					oBody.addOutputs(oOutput);
@@ -311,7 +316,7 @@ public class TransactionHelper implements ActorService {
 				Map<String, String> keys = new HashMap<String, String>();
 				for(MultiTransactionInputImpl reqInputImpl : reqInputsImpl){
 					String reqAddress = reqInputImpl.getAddress();
-					long reqAmount = reqInputImpl.getAmount();
+					BigDecimal reqAmount = ws.multiply(new BigDecimal(reqInputImpl.getAmount()));
 					String reqCryptoToken = reqInputImpl.getCryptoToken();
 					int reqFee = reqInputImpl.getFee();
 					int reqFeeLimit = reqInputImpl.getFeeLimit();
@@ -329,7 +334,7 @@ public class TransactionHelper implements ActorService {
 					
 					MultiTransactionInput.Builder oInput = MultiTransactionInput.newBuilder();
 					oInput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
-					oInput.setAmount(reqAmount);
+					oInput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(new BigInteger(reqAmount.toString()))));
 					if(StringUtils.isNotBlank(reqToken)){
 						oInput.setToken(reqToken);
 						oBody.setType(TransTypeEnum.TYPE_TokenTransaction.value());
@@ -481,7 +486,7 @@ public class TransactionHelper implements ActorService {
 		MultiTransactionInputImpl reqInputImpl = pb.getInput();
 		if(reqInputImpl != null){
 			String reqAddress = reqInputImpl.getAddress();
-			
+			BigDecimal reqAmount = ws.multiply(new BigDecimal(pb.getInput().getAmount());
 			CWVWltAddress addressEntity = getAddress(reqAddress);
 			
 			long currentTime = System.currentTimeMillis();
@@ -496,7 +501,7 @@ public class TransactionHelper implements ActorService {
 
 			MultiTransactionInput.Builder oMultiTransactionInput = MultiTransactionInput.newBuilder();
 			oMultiTransactionInput.setAddress(ByteString.copyFrom(encApi.hexDec(pb.getInput().getAddress())));
-			oMultiTransactionInput.setAmount(pb.getInput().getAmount());
+			oMultiTransactionInput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes()))));
 //			oMultiTransactionInput.setCryptoToken(ByteString.copyFrom(encApi.hexDec(pb.getInput().getCryptoToken())));
 			oMultiTransactionInput.setFee(pb.getInput().getFee());
 			oMultiTransactionInput.setNonce(pb.getInput().getNonce());
@@ -683,7 +688,7 @@ public class TransactionHelper implements ActorService {
 	public MultiTransactionInputImpl.Builder getInput(JsonNode input){
 		MultiTransactionInputImpl.Builder inputB = MultiTransactionInputImpl.newBuilder();
 		inputB.setAddress(input.has("address") ? input.get("address").asText() : "");
-		inputB.setAmount(input.has("amount") ? input.get("amount").asLong() : 0l);
+		inputB.setAmount(input.has("amount") ? input.get("amount").asText() : "0");
 		inputB.setCryptoToken(input.has("cryptoToken") ? input.get("cryptoToken").asText() : "");
 		inputB.setFee(input.has("fee") ? input.get("fee").asInt() : 0);
 		inputB.setFeeLimit(input.has("feeLimit") ? input.get("feeLimit").asInt() : 0);
@@ -702,7 +707,7 @@ public class TransactionHelper implements ActorService {
 	public MultiTransactionOutputImpl.Builder getOutput(JsonNode output){
 		MultiTransactionOutputImpl.Builder outputB = MultiTransactionOutputImpl.newBuilder();
 		outputB.setAddress(output.has("address") ? output.get("address").asText() : "");
-		outputB.setAmount(output.has("amount") ? output.get("amount").asLong() : 0l);
+		outputB.setAmount(output.has("amount") ? output.get("amount").asText() : "0");
 		outputB.setCryptoToken(output.has("cryptoToken") ? output.get("cryptoToken").asText() : "");
 		outputB.setSymbol(output.has("symbol") ? output.get("symbol").asText() : "");
 		return outputB;

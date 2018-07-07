@@ -147,7 +147,7 @@ message MultiTransactionInputImpl {//发起方详情
 	int32 fee = 2;//手续费
 	int32 feeLimit = 3;//。。。。
 	string address = 4;//发起方地址 
-	int64 amount= 5;//交易金额 
+	string amount= 5;//交易金额 
 	string pubKey = 6;//发起方公钥 
 	string token = 7;//ERC20 token名字 
 	string symbol = 8;//ERC721 token标记 
@@ -156,7 +156,7 @@ message MultiTransactionInputImpl {//发起方详情
 
 message MultiTransactionOutputImpl {//接收方详情
 	string address= 1;//接收方地址 
-	int64 amount= 2;//交易金额 
+	string amount= 2;//交易金额 
 	string symbol = 3;//ERC721 token 标记 
 	string cryptoToken = 4;//ERC721 token名字 
 };
@@ -198,7 +198,7 @@ message MultiTransactionInput {
 	int32 fee = 2;
 	int32 feeLimit = 3;
 	bytes address = 4;
-	int64 amount= 5;
+	bytes amount= 5;
 	bytes pubKey = 6;
 	string token = 7;
 	string symbol = 8;
@@ -207,7 +207,7 @@ message MultiTransactionInput {
 
 message MultiTransactionOutput {
 	bytes address= 1;
-	int64 amount= 2;
+	bytes amount= 2;
 	string symbol = 3;
 	bytes cryptoToken = 4;
 }

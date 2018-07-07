@@ -13,7 +13,10 @@ project.group='org.brewchain'
 apply plugin: 'eclipse'
 apply plugin: 'zippo'
 
-
+ext {
+    // leveldbVersion = '0.7'
+    scastleVersion = '1.54.0.0'
+}
 
 dependencies {
 	compile "org.fc.zippo:org.fc.zippo.ordbutils:3.0.5"
@@ -21,6 +24,9 @@ dependencies {
 	compile ("org.brewchain:org.brewchain.bcapi:3.3.4")
 	compile 'com.fasterxml.jackson:jackson-parent:2.5'
 	compile ("org.brewchain:org.brewchain.evmapi:1.0.0")
+	
+	includeInJar "com.madgag.spongycastle:core:${scastleVersion}" // for SHA3 and SECP256K1
+    includeInJar "com.madgag.spongycastle:prov:${scastleVersion}" // for SHA3 and SECP256K1
 }
 
 jar {
