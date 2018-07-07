@@ -83,7 +83,7 @@ public class TransactionHelper implements ActorService {
 
 	ObjectMapper mapper = new ObjectMapper();
 	
-	BigDecimal ws = new BigDecimal("100000000000000000");
+	BigDecimal ws = new BigDecimal("1000000000000000000");
 
 	private static String CREATE_TRANSACTION = "createTransactionURL";
 	private static String CREATE_CONTRACT = "createContractURL";
@@ -116,7 +116,7 @@ public class TransactionHelper implements ActorService {
 				
 				List<MultiTransactionInputImpl> reqInputsImpl = reqBodyImpl.getInputsList();
 				List<MultiTransactionOutputImpl> reqOutputsImpl = reqBodyImpl.getOutputsList();
-				
+				int reqType = 0;
 				for(MultiTransactionOutputImpl reqOutputImpl : reqOutputsImpl){
 					String reqAddress = reqOutputImpl.getAddress();
 					BigDecimal reqAmount = ws.multiply(new BigDecimal(reqOutputImpl.getAmount()));
@@ -161,7 +161,13 @@ public class TransactionHelper implements ActorService {
 					oInput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(reqAmount.toBigInteger())));
 					if(StringUtils.isNotBlank(reqToken)){
 						oInput.setToken(reqToken);
-						oBody.setType(TransTypeEnum.TYPE_TokenTransaction.value());
+						if(reqType==0){
+							reqType=TransTypeEnum.TYPE_TokenTransaction.value();
+							oBody.setType(TransTypeEnum.TYPE_TokenTransaction.value());
+						}else if(reqType==TransTypeEnum.TYPE_CryptoTokenTransaction.value()){
+							ret.setRetCode(-1).setRetMsg("erc2.0 and erc721 can not send together");
+							return ret;
+						}
 					}else{
 						oInput.setToken("");
 					}
@@ -172,6 +178,13 @@ public class TransactionHelper implements ActorService {
 					if(StringUtils.isNoneBlank(reqSymbol, reqCryptoToken)){
 						oInput.setSymbol(reqSymbol);
 						oInput.setCryptoToken(ByteString.copyFrom(encApi.hexDec(reqCryptoToken)));
+						if(reqType==0){
+							reqType=TransTypeEnum.TYPE_CryptoTokenTransaction.value();
+							oBody.setType(TransTypeEnum.TYPE_CryptoTokenTransaction.value());
+						}else if(reqType==TransTypeEnum.TYPE_TokenTransaction.value()){
+							ret.setRetCode(-1).setRetMsg("erc2.0 and erc721 can not send together");
+							return ret;
+						}
 						oBody.setType(TransTypeEnum.TYPE_CryptoTokenTransaction.value());
 					}else{
 						oInput.setSymbol("");
@@ -242,6 +255,7 @@ public class TransactionHelper implements ActorService {
 						retNode = mapper.readTree(qryTxRet.getBody());
 					} catch (Exception e){
 						log.error("parse create transaction return error : " + e.getMessage());
+						
 					}
 					
 					if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){

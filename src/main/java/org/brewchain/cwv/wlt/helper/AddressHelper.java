@@ -58,7 +58,7 @@ public class AddressHelper implements ActorService {
 	@ActorRequire(name = "daos", scope = "global")
 	Daos daos;
 	
-	BigDecimal ws = new BigDecimal("100000000000000000");
+	BigDecimal ws = new BigDecimal("1000000000000000000");
 
 	private final static String QUERY_ADDRESS = "queryAddressURL";
 
