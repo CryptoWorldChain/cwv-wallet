@@ -153,7 +153,7 @@ public class AddressHelper implements ActorService {
 			JsonNode accountNode = retNode.get("account");
 			AccountValueImpl.Builder account = AccountValueImpl.newBuilder();
 			account.setNonce(accountNode.has("nonce") ? accountNode.get("nonce").asInt() : 0);
-			account.setBalance(accountNode.has("balance") ? new BigDecimal(accountNode.get("balance").asText()).divide(ws, 18).toString() : "0");
+			account.setBalance(accountNode.has("balance") ? new BigDecimal(accountNode.get("balance").asText()).divide(ws, 18,BigDecimal.ROUND_HALF_UP).toString() : "0");
 			account.setPubKey(accountNode.has("pubKey") ? accountNode.get("pubKey").asText() : "");
 			account.setMax(accountNode.has("max") ? accountNode.get("max").asLong() : 0L);
 			account.setAcceptMax(accountNode.has("acceptMax") ? accountNode.get("acceptMax").asLong() : 0L);
@@ -174,7 +174,7 @@ public class AddressHelper implements ActorService {
 				if(tokens != null && tokens.size() > 0){
 					for(JsonNode token : tokens){
 						AccountTokenValueImpl.Builder tokenValue = AccountTokenValueImpl.newBuilder();
-						tokenValue.setBalance(token.has("balance") ? new BigDecimal(token.get("balance").asText()).divide(ws, 18).toString() : "0");
+						tokenValue.setBalance(token.has("balance") ? new BigDecimal(token.get("balance").asText()).divide(ws, 18,BigDecimal.ROUND_HALF_UP).toString() : "0");
 						tokenValue.setToken(token.has("token") ? token.get("token").asText() : "");
 						
 						account.addTokens(tokenValue);

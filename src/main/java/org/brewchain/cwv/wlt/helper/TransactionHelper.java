@@ -106,7 +106,7 @@ public class TransactionHelper implements ActorService {
 		 * 再转成 transactionImpl
 		 * 发送
 		 */
-		RespCreateTransaction.Builder ret = null;
+		RespCreateTransaction.Builder ret = RespCreateTransaction.newBuilder();
 		if(reqTransaction.getTxBody() != null){
 			MultiTransactionBodyImpl reqBodyImpl = reqTransaction.getTxBody();
 			if(reqBodyImpl.getInputsList() != null && !reqBodyImpl.getInputsList().isEmpty() && reqBodyImpl.getOutputsList() != null && !reqBodyImpl.getOutputsList().isEmpty()){
@@ -125,8 +125,7 @@ public class TransactionHelper implements ActorService {
 
 					
 					if(StringUtils.isBlank(reqAddress)){
-						log.warn("output's address is null");
-						return null;
+						return ret.setRetCode(-1).setRetMsg("output's address is nul");
 					}
 					
 					MultiTransactionOutput.Builder oOutput = MultiTransactionOutput.newBuilder();
@@ -150,8 +149,7 @@ public class TransactionHelper implements ActorService {
 					String reqToken = reqInputImpl.getToken();
 					
 					if(StringUtils.isBlank(reqAddress)){
-						log.warn("input's address is null");
-						return null;
+						return ret.setRetCode(-1).setRetMsg("input's address is nul");
 					}
 					
 					CWVWltAddress addressEntity = getAddress(reqAddress);
@@ -165,8 +163,7 @@ public class TransactionHelper implements ActorService {
 							reqType=TransTypeEnum.TYPE_TokenTransaction.value();
 							oBody.setType(TransTypeEnum.TYPE_TokenTransaction.value());
 						}else if(reqType==TransTypeEnum.TYPE_CryptoTokenTransaction.value()){
-							ret.setRetCode(-1).setRetMsg("erc2.0 and erc721 can not send together");
-							return ret;
+							return ret.setRetCode(-1).setRetMsg("erc2.0 and erc721 can not send together");
 						}
 					}else{
 						oInput.setToken("");
@@ -182,10 +179,8 @@ public class TransactionHelper implements ActorService {
 							reqType=TransTypeEnum.TYPE_CryptoTokenTransaction.value();
 							oBody.setType(TransTypeEnum.TYPE_CryptoTokenTransaction.value());
 						}else if(reqType==TransTypeEnum.TYPE_TokenTransaction.value()){
-							ret.setRetCode(-1).setRetMsg("erc2.0 and erc721 can not send together");
-							return ret;
+							return ret.setRetCode(-1).setRetMsg("erc2.0 and erc721 can not send together");
 						}
-						oBody.setType(TransTypeEnum.TYPE_CryptoTokenTransaction.value());
 					}else{
 						oInput.setSymbol("");
 						oInput.setCryptoToken(ByteString.EMPTY);
@@ -248,6 +243,7 @@ public class TransactionHelper implements ActorService {
 				Object parameterObj = daos.wltParameterDao.selectOneByExample(parameterExample);
 				if(parameterObj != null){
 					CWVWltParameter parameter = (CWVWltParameter)parameterObj;
+					log.debug("send param ----------:"+jsonView);
 					FramePacket fposttx = PacketHelper.buildUrlFromJson(jsonView, "POST", parameter.getParamValue());
 					val qryTxRet = sender.send(fposttx, 30000);
 					JsonNode retNode = null;
@@ -267,13 +263,21 @@ public class TransactionHelper implements ActorService {
 						if(retNode.has("txHash")){
 							insertTxHash(retNode.get("txHash").asText());
 						}
+					}else{
+						ret = RespCreateTransaction.newBuilder();
+						ret.setRetCode(retNode.get("retCode").asInt());
+						ret.setRetMsg(retNode.has("retMsg") ? retNode.get("retMsg").asText() : "");
 					}
 				}
 			}else{
-				log.warn("inputs or outputs is null");
+				ret = RespCreateTransaction.newBuilder();
+				ret.setRetCode(-1);
+				ret.setRetMsg("inputs or outputs is null");
 			}
 		}else{
-			log.warn("tx body is null");
+			ret = RespCreateTransaction.newBuilder();
+			ret.setRetCode(-1);
+			ret.setRetMsg("tx body is null");
 		}
 
 		return ret;

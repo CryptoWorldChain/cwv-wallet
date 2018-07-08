@@ -67,28 +67,26 @@ public class CreateTransaction extends SessionModules<BaseData>{
 						JsonNode node = new ObjectMapper().readTree(decryptData);
 						InputStream inputStream = new ByteArrayInputStream(node.toString().getBytes()); 
 						new JsonPBFormat().merge(inputStream, req);
-						
+						log.debug(new JsonPBFormat().printToString(req.getTransaction()));
 						ret = txHelper.createTransaction(req.getTransaction());
-						if(ret == null){
-							log.error("create transaction error");
-							ret = RespCreateTransaction.newBuilder();
-							ret.setRetCode(-1);
-						}
 					}else {
 						ret = RespCreateTransaction.newBuilder();
-						ret.setRetCode(-1).setRetMsg(" no crypto data");
+						ret.setRetCode(-1).setRetMsg("no crypto data");
 					}
 				} catch (Exception e){
+					e.printStackTrace();
+					log.debug("create transaction exception,message:"+e.getMessage());
 					ret = RespCreateTransaction.newBuilder();
-					ret.setRetCode(-1).setRetMsg("create transaction error");
+					ret.setRetCode(-1).setRetMsg(e.getMessage());
 				}
 			} else {
+				log.debug("get system param["+pb.getBusi()+"] error");
 				ret = RespCreateTransaction.newBuilder();
 				ret.setRetCode(-1).setRetMsg("create transaction error");
 			}
 		} else {
 			ret = RespCreateTransaction.newBuilder();
-			ret.setRetCode(-1).setRetMsg("create transaction error");
+			ret.setRetCode(-1).setRetMsg("request has illegal argument");
 		}
 		
 		handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()));
