@@ -120,6 +120,8 @@ public class TransactionHelper implements ActorService {
 				for(MultiTransactionOutputImpl reqOutputImpl : reqOutputsImpl){
 					String reqAddress = reqOutputImpl.getAddress();
 					BigDecimal reqAmount = ws.multiply(new BigDecimal(reqOutputImpl.getAmount()));
+					log.debug("output's amount is :------------->"+ reqAmount.toBigInteger());
+					log.debug("");
 					String reqCryptoToken = reqOutputImpl.getCryptoToken();
 					String reqSymbol = reqOutputImpl.getSymbol();
 
@@ -140,6 +142,7 @@ public class TransactionHelper implements ActorService {
 				for(MultiTransactionInputImpl reqInputImpl : reqInputsImpl){
 					String reqAddress = reqInputImpl.getAddress();
 					BigDecimal reqAmount =ws.multiply(new BigDecimal(reqInputImpl.getAmount()));
+					log.debug("input's amount is :------------->"+ reqAmount.toBigInteger());
 					String reqCryptoToken = reqInputImpl.getCryptoToken();
 					int reqFee = reqInputImpl.getFee();
 					int reqFeeLimit = reqInputImpl.getFeeLimit();
@@ -171,7 +174,7 @@ public class TransactionHelper implements ActorService {
 					oInput.setFee(reqFee);
 					oInput.setFeeLimit(reqFeeLimit);
 					oInput.setNonce(reqNonce);
-					oInput.setPubKey(ByteString.copyFrom(encApi.hexDec(reqPubKey)));
+					oInput.setPubKey(ByteString.copyFrom(encApi.hexDec(addressEntity.getPublicKey())));
 					if(StringUtils.isNoneBlank(reqSymbol, reqCryptoToken)){
 						oInput.setSymbol(reqSymbol);
 						oInput.setCryptoToken(ByteString.copyFrom(encApi.hexDec(reqCryptoToken)));
@@ -209,7 +212,7 @@ public class TransactionHelper implements ActorService {
 				}
 				
 				oBody.setTimestamp(System.currentTimeMillis());
-				
+				log.debug("signature param:--->"+new JsonFormat().printToString(oBody.build()));
 				String pub = "";
 				MultiTransactionSignature.Builder oMultiTransactionSignature21 = null;
 				//签名
@@ -221,7 +224,14 @@ public class TransactionHelper implements ActorService {
 					String pri = addressEntity.getPrivateKey();
 					oMultiTransactionSignature21 = MultiTransactionSignature.newBuilder();
 					oMultiTransactionSignature21.setPubKey(ByteString.copyFrom(encApi.hexDec(pub)));
-					oMultiTransactionSignature21.setSignature(ByteString.copyFrom(encApi.ecSign(pri, oBody.build().toByteArray())));
+					
+					byte[] sign = encApi.ecSign(pri, oBody.build().toByteArray());
+					log.debug("signature is :--->"+encApi.hexEnc(sign));
+					oMultiTransactionSignature21.setSignature(ByteString.copyFrom(sign));
+					
+					
+					boolean flag = encApi.ecVerify(pub, oBody.build().toByteArray(),sign);
+					log.debug("verify signatrue result:--->"+flag);
 					signatures.add(oMultiTransactionSignature21);
 				}
 				
@@ -283,168 +293,6 @@ public class TransactionHelper implements ActorService {
 		return ret;
 	}
 	
-	/**
-	 * 创建交易，供触网冷钱包使用
-	 * 
-	 * 如果 erc20 或者 erc721 交易，需要所有发起方的 token 或者 symbol 均相同，即同一笔交易，只能实现一种token的转移
-	 * 
-	 * @param reqBody
-	 * @return
-	 */
-	public RespCreateTransaction.Builder createTx4ColdPurse(MultiTransactionImpl reqTransaction) {
-		
-		/**
-		 * 接收对象为 transactionImpl
-		 * 先转成 transaction
-		 * 进行签名
-		 * 再转成 transactionImpl
-		 * 发送
-		 */
-		RespCreateTransaction.Builder ret = null;
-		if(reqTransaction.getTxBody() != null){
-			MultiTransactionBodyImpl reqBodyImpl = reqTransaction.getTxBody();
-			if(reqBodyImpl.getInputsList() != null && !reqBodyImpl.getInputsList().isEmpty() && reqBodyImpl.getOutputsList() != null && !reqBodyImpl.getOutputsList().isEmpty()&&reqBodyImpl.getSignaturesList()!=null&&!reqBodyImpl.getSignaturesList().isEmpty()){
-				MultiTransaction.Builder oTransaction = MultiTransaction.newBuilder();
-				MultiTransactionBody.Builder oBody = MultiTransactionBody.newBuilder();
-				//构建 oBody
-				
-				List<MultiTransactionInputImpl> reqInputsImpl = reqBodyImpl.getInputsList();
-				List<MultiTransactionOutputImpl> reqOutputsImpl = reqBodyImpl.getOutputsList();
-				
-				for(MultiTransactionOutputImpl reqOutputImpl : reqOutputsImpl){
-					String reqAddress = reqOutputImpl.getAddress();
-					BigDecimal reqAmount = ws.multiply(new BigDecimal(reqOutputImpl.getAmount()));
-					String reqCryptoToken = reqOutputImpl.getCryptoToken();
-					String reqSymbol = reqOutputImpl.getSymbol();
-
-					
-					if(StringUtils.isBlank(reqAddress)){
-						log.warn("output's address is null");
-						return null;
-					}
-					
-					MultiTransactionOutput.Builder oOutput = MultiTransactionOutput.newBuilder();
-					oOutput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
-					oOutput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(reqAmount.toBigInteger())));
-					oOutput.setCryptoToken(StringUtils.isNotBlank(reqCryptoToken) ? ByteString.copyFrom(encApi.hexDec(reqCryptoToken)) : ByteString.EMPTY);
-					oOutput.setSymbol(StringUtils.isNotBlank(reqSymbol) ? reqSymbol : "");
-					oBody.addOutputs(oOutput);
-				}
-				
-				Map<String, String> keys = new HashMap<String, String>();
-				for(MultiTransactionInputImpl reqInputImpl : reqInputsImpl){
-					String reqAddress = reqInputImpl.getAddress();
-					BigDecimal reqAmount = ws.multiply(new BigDecimal(reqInputImpl.getAmount()));
-					String reqCryptoToken = reqInputImpl.getCryptoToken();
-					int reqFee = reqInputImpl.getFee();
-					int reqFeeLimit = reqInputImpl.getFeeLimit();
-					int reqNonce = reqInputImpl.getNonce();
-					String reqPubKey = reqInputImpl.getPubKey();
-					String reqSymbol = reqInputImpl.getSymbol();
-					String reqToken = reqInputImpl.getToken();
-					
-					if(StringUtils.isBlank(reqAddress)){
-						log.warn("input's address is null");
-						return null;
-					}
-					
-//					CWVWltAddress addressEntity = getAddress(reqAddress);
-					
-					MultiTransactionInput.Builder oInput = MultiTransactionInput.newBuilder();
-					oInput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
-					oInput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(reqAmount.toBigInteger())));
-					if(StringUtils.isNotBlank(reqToken)){
-						oInput.setToken(reqToken);
-						oBody.setType(TransTypeEnum.TYPE_TokenTransaction.value());
-					}else{
-						oInput.setToken("");
-					}
-					oInput.setFee(reqFee);
-					oInput.setFeeLimit(reqFeeLimit);
-					oInput.setNonce(reqNonce);
-					oInput.setPubKey(ByteString.copyFrom(encApi.hexDec(reqPubKey)));
-					if(StringUtils.isNoneBlank(reqSymbol, reqCryptoToken)){
-						oInput.setSymbol(reqSymbol);
-						oInput.setCryptoToken(ByteString.copyFrom(encApi.hexDec(reqCryptoToken)));
-						oBody.setType(TransTypeEnum.TYPE_CryptoTokenTransaction.value());
-					}else{
-						oInput.setSymbol("");
-						oInput.setCryptoToken(ByteString.EMPTY);
-						}
-					oBody.addInputs(oInput);
-					
-//					keys.put(reqPubKey, addressEntity.getPrivateKey());
-				}
-				
-				if(StringUtils.isNotBlank(reqBodyImpl.getExdata())){
-					oBody.setExdata(ByteString.copyFrom(encApi.hexDec(reqBodyImpl.getExdata())));
-				}
-				
-				if(reqBodyImpl.getDelegateList() != null && !reqBodyImpl.getDelegateList().isEmpty()){
-					for(String str : reqBodyImpl.getDelegateList()){
-						oBody.addDelegate(ByteString.copyFrom(encApi.hexDec(str)));
-					}
-				}
-				
-				if(StringUtils.isNotBlank(reqBodyImpl.getData())){
-					//如果 data 不为空， 说明是创建合约交易
-					oBody.setData(ByteString.copyFromUtf8(reqBodyImpl.getData()));
-				}
-				
-				oBody.setTimestamp(reqBodyImpl.getTimestamp());
-				
-				//签名
-				List<MultiTransactionSignatureImpl> signaturesImpl = reqBodyImpl.getSignaturesList();
-				for(MultiTransactionSignatureImpl signatures : signaturesImpl){
-					MultiTransactionSignature.Builder s = MultiTransactionSignature.newBuilder();
-					s.setPubKey(ByteString.copyFrom(encApi.hexDec(signatures.getPubKey())));
-					s.setSignature(ByteString.copyFrom(encApi.hexDec(signatures.getSignature())));
-					oBody.addSignatures(s);
-				}
-				
-				oTransaction.setTxBody(oBody);
-				
-				ReqCreateMultiTransaction.Builder oCreate = ReqCreateMultiTransaction.newBuilder();
-				
-				MultiTransactionImpl.Builder oTransactionImpl = parseToImpl(oTransaction.build());
-				oCreate.setTransaction(oTransactionImpl);
-				
-				JsonFormat jsonFormat = new JsonFormat();
-				String jsonView = jsonFormat.printToString(oCreate.build());
-				CWVWltParameterExample parameterExample = new CWVWltParameterExample();
-				parameterExample.createCriteria().andParamCodeEqualTo(CREATE_TRANSACTION);
-				Object parameterObj = daos.wltParameterDao.selectOneByExample(parameterExample);
-				if(parameterObj != null){
-					CWVWltParameter parameter = (CWVWltParameter)parameterObj;
-					FramePacket fposttx = PacketHelper.buildUrlFromJson(jsonView, "POST", parameter.getParamValue());
-					val qryTxRet = sender.send(fposttx, 30000);
-					JsonNode retNode = null;
-					try{
-						retNode = mapper.readTree(qryTxRet.getBody());
-					} catch (Exception e){
-						log.error("parse create transaction return error : " + e.getMessage());
-					}
-					
-					if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){
-						ret = RespCreateTransaction.newBuilder();
-						ret.setTxHash(retNode.has("txHash") ? retNode.get("txHash").asText() : "");
-						ret.setRetCode(retNode.get("retCode").asInt());
-						ret.setRetMsg(retNode.has("retMsg") ? retNode.get("retMsg").asText() : "");
-						
-						if(retNode.has("txHash")){
-							insertTxHash(retNode.get("txHash").asText());
-						}
-					}
-				}
-			}else{
-				log.warn("inputs or outputs is null");
-			}
-		}else{
-			log.warn("tx body is null");
-		}
-
-		return ret;
-	}
 
 	/**
 	 * 根据 txHash 获取 交易详情
@@ -824,7 +672,7 @@ public class TransactionHelper implements ActorService {
 		for (MultiTransactionInput input : oMultiTransactionBody.getInputsList()) {
 			MultiTransactionInputImpl.Builder oMultiTransactionInputImpl = MultiTransactionInputImpl.newBuilder();
 			oMultiTransactionInputImpl.setAddress(encApi.hexEnc(input.getAddress().toByteArray()));
-			oMultiTransactionInputImpl.setAmount(ByteUtil.bytesToIp(input.getAmount().toByteArray()));
+			oMultiTransactionInputImpl.setAmount(ByteUtil.bytesToBigInteger(input.getAmount().toByteArray()).toString());
 			oMultiTransactionInputImpl.setCryptoToken(encApi.hexEnc(input.getCryptoToken().toByteArray()));
 			oMultiTransactionInputImpl.setFee(input.getFee());
 			oMultiTransactionInputImpl.setNonce(input.getNonce());
@@ -836,7 +684,7 @@ public class TransactionHelper implements ActorService {
 		for (MultiTransactionOutput output : oMultiTransactionBody.getOutputsList()) {
 			MultiTransactionOutputImpl.Builder oMultiTransactionOutputImpl = MultiTransactionOutputImpl.newBuilder();
 			oMultiTransactionOutputImpl.setAddress(encApi.hexEnc(output.getAddress().toByteArray()));
-			oMultiTransactionOutputImpl.setAmount(ByteUtil.bytesToIp(output.getAmount().toByteArray()));
+			oMultiTransactionOutputImpl.setAmount(ByteUtil.bytesToBigInteger(output.getAmount().toByteArray()).toString());
 			oMultiTransactionOutputImpl.setCryptoToken(encApi.hexEnc(output.getCryptoToken().toByteArray()));
 			oMultiTransactionOutputImpl.setSymbol(output.getSymbol());
 			oMultiTransactionBodyImpl.addOutputs(oMultiTransactionOutputImpl);
