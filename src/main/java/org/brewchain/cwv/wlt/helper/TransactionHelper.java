@@ -193,7 +193,7 @@ public class TransactionHelper implements ActorService {
 					}
 					oBody.addInputs(oInput);
 					
-					keys.put(reqPubKey, addressEntity.getPrivateKey());
+					keys.put(reqPubKey, addressEntity.getPublicKey());
 				}
 				
 				if(StringUtils.isNotBlank(reqBodyImpl.getExdata())){
@@ -351,7 +351,7 @@ public class TransactionHelper implements ActorService {
 		MultiTransactionInputImpl reqInputImpl = pb.getInput();
 		if(reqInputImpl != null){
 			String reqAddress = reqInputImpl.getAddress();
-			BigDecimal reqAmount = ws.multiply(new BigDecimal(pb.getInput().getAmount()));
+			BigDecimal reqAmount = ws.multiply(StringUtils.isEmpty(pb.getInput().getAmount())?new BigDecimal(0) : new BigDecimal(pb.getInput().getAmount()));
 			CWVWltAddress addressEntity = getAddress(reqAddress);
 			
 			long currentTime = System.currentTimeMillis();
