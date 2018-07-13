@@ -119,7 +119,7 @@ public class TransactionHelper implements ActorService {
 				int reqType = 0;
 				for(MultiTransactionOutputImpl reqOutputImpl : reqOutputsImpl){
 					String reqAddress = reqOutputImpl.getAddress();
-					BigDecimal reqAmount = ws.multiply(new BigDecimal(reqOutputImpl.getAmount()));
+					BigDecimal reqAmount = StringUtils.isEmpty(reqOutputImpl.getAmount()) ? new BigDecimal("0") : ws.multiply(new BigDecimal(reqOutputImpl.getAmount()));
 					log.debug("output's amount is :------------->"+ reqAmount.toBigInteger());
 					log.debug("");
 					String reqCryptoToken = reqOutputImpl.getCryptoToken();
@@ -141,7 +141,7 @@ public class TransactionHelper implements ActorService {
 				Map<String, String> keys = new HashMap<String, String>();
 				for(MultiTransactionInputImpl reqInputImpl : reqInputsImpl){
 					String reqAddress = reqInputImpl.getAddress();
-					BigDecimal reqAmount =ws.multiply(new BigDecimal(reqInputImpl.getAmount()));
+					BigDecimal reqAmount =StringUtils.isEmpty(reqInputImpl.getAmount())? new BigDecimal("0") : ws.multiply(new BigDecimal(reqInputImpl.getAmount()));
 					log.debug("input's amount is :------------->"+ reqAmount.toBigInteger());
 					String reqCryptoToken = reqInputImpl.getCryptoToken();
 					int reqFee = reqInputImpl.getFee();
