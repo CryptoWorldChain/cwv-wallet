@@ -216,28 +216,25 @@ public class TransactionHelper implements ActorService {
 				String pub = "";
 				MultiTransactionSignature.Builder oMultiTransactionSignature21 = null;
 				//签名
-				List<MultiTransactionSignature.Builder> signatures = new ArrayList<MultiTransactionSignature.Builder>();
-				for(MultiTransactionInputImpl reqInput : reqInputsImpl){
-					String reqAddress = reqInput.getAddress();
-					CWVWltAddress addressEntity = getAddress(reqAddress);
-					pub = addressEntity.getPublicKey();
-					String pri = addressEntity.getPrivateKey();
-					oMultiTransactionSignature21 = MultiTransactionSignature.newBuilder();
-					oMultiTransactionSignature21.setPubKey(ByteString.copyFrom(encApi.hexDec(pub)));
-					
-					byte[] sign = encApi.ecSign(pri, oBody.build().toByteArray());
-					log.debug("signature is :--->"+encApi.hexEnc(sign));
-					oMultiTransactionSignature21.setSignature(ByteString.copyFrom(sign));
-					
-					
-					boolean flag = encApi.ecVerify(pub, oBody.build().toByteArray(),sign);
-					log.debug("verify signatrue result:--->"+flag);
-					signatures.add(oMultiTransactionSignature21);
-				}
+//				List<MultiTransactionSignature.Builder> signatures = new ArrayList<MultiTransactionSignature.Builder>();
+				MultiTransactionInputImpl reqInput = reqInputsImpl.get(0);
+				String reqAddress = reqInput.getAddress();
+				CWVWltAddress addressEntity = getAddress(reqAddress);
+				pub = addressEntity.getPublicKey();
+				String pri = addressEntity.getPrivateKey();
+				oMultiTransactionSignature21 = MultiTransactionSignature.newBuilder();
+				oMultiTransactionSignature21.setPubKey(ByteString.copyFrom(encApi.hexDec(pub)));
 				
-				for(MultiTransactionSignature.Builder s: signatures){
-					oBody.addSignatures(s);
-				}
+				byte[] sign = encApi.ecSign(pri, oBody.build().toByteArray());
+				log.debug("signature is :--->"+encApi.hexEnc(sign));
+				oMultiTransactionSignature21.setSignature(ByteString.copyFrom(sign));
+				
+				
+				boolean flag = encApi.ecVerify(pub, oBody.build().toByteArray(),sign);
+				log.debug("verify signatrue result:--->"+flag);
+//				signatures.add(oMultiTransactionSignature21);
+				
+				oBody.addSignatures(oMultiTransactionSignature21);
 				
 				oTransaction.setTxBody(oBody);
 				
