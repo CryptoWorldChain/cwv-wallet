@@ -68,10 +68,6 @@ public class CreateContract extends SessionModules<BaseData>{
 						InputStream inputStream = new ByteArrayInputStream(node.toString().getBytes()); 
 						new JsonPBFormat().merge(inputStream, req);
 						ret = txHelper.createContract(req.build());
-						if(ret == null){
-							log.error("create contract error");
-							ret = RespCreateContractTransaction.newBuilder().setRetCode(-1).setRetMsg("create error");
-						}
 					}else {
 						ret = RespCreateContractTransaction.newBuilder();
 						ret.setRetCode(-1).setRetMsg("create contract error, no decryptodata");

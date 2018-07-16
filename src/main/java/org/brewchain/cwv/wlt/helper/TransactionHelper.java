@@ -343,7 +343,7 @@ public class TransactionHelper implements ActorService {
 		 * 
 		 */
 		
-		RespCreateContractTransaction.Builder ret = null;
+		RespCreateContractTransaction.Builder ret = RespCreateContractTransaction.newBuilder();
 		
 		MultiTransactionInputImpl reqInputImpl = pb.getInput();
 		if(reqInputImpl != null){
@@ -365,7 +365,7 @@ public class TransactionHelper implements ActorService {
 			oMultiTransactionInput.setAddress(ByteString.copyFrom(encApi.hexDec(pb.getInput().getAddress())));
 			oMultiTransactionInput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(reqAmount.toBigInteger())));
 //			oMultiTransactionInput.setCryptoToken(ByteString.copyFrom(encApi.hexDec(pb.getInput().getCryptoToken())));
-			oMultiTransactionInput.setFee(pb.getInput().getFee());
+//			oMultiTransactionInput.setFee(pb.getInput().getFee());
 			oMultiTransactionInput.setNonce(pb.getInput().getNonce());
 //			oMultiTransactionInput.setSymbol(pb.getInput().getSymbol());
 //			oMultiTransactionInput.setToken(pb.getInput().getToken());
@@ -373,12 +373,20 @@ public class TransactionHelper implements ActorService {
 			oMultiTransactionBody.setTimestamp(currentTime);
 			oMultiTransactionBody.setType(TransTypeEnum.TYPE_CreateContract.value());
 			oMultiTransactionBody.setData(ByteString.copyFrom(encApi.hexDec(pb.getData())));
+			oMultiTransactionBody.setExdata(ByteString.copyFrom(encApi.hexDec(pb.getExdata())));
 			
-			MultiTransactionSignature.Builder oMultiTransactionSignature = MultiTransactionSignature.newBuilder();
-			oMultiTransactionSignature.setPubKey(ByteString.copyFrom(encApi.hexDec(addressEntity.getPublicKey())));
-			oMultiTransactionSignature.setSignature(ByteString.copyFrom(encApi.ecSign(addressEntity.getPrivateKey(), oMultiTransactionBody.build().toByteArray())));
-			oMultiTransactionBody.addSignatures(oMultiTransactionSignature);
+			oMultiTransaction.clearTxHash();
+			oMultiTransactionBody.clearSignatures();
+			oMultiTransactionBody.setTimestamp(System.currentTimeMillis());
+			
+			// 签名
+			MultiTransactionSignature.Builder oMultiTransactionSignature21 = MultiTransactionSignature.newBuilder();
+			oMultiTransactionSignature21.setPubKey(ByteString.copyFrom(encApi.hexDec(addressEntity.getPublicKey())));
+			oMultiTransactionSignature21.setSignature(
+					ByteString.copyFrom(encApi.ecSign(addressEntity.getPrivateKey(), oMultiTransactionBody.build().toByteArray())));
+			oMultiTransactionBody.addSignatures(oMultiTransactionSignature21);
 			oMultiTransaction.setTxBody(oMultiTransactionBody);
+
 			
 			ReqCreateMultiTransaction.Builder oCreate = ReqCreateMultiTransaction.newBuilder();
 			
@@ -415,10 +423,10 @@ public class TransactionHelper implements ActorService {
 					retNode = mapper.readTree(crtTxRet.getBody());
 				} catch (IOException e) {
 					log.error("parse ret error : " + new String(crtTxRet.getBody()));
+					ret.setRetMsg("parse ret error : "+new String(crtTxRet.getBody()));
 				}
 				
 				if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){
-					ret = RespCreateContractTransaction.newBuilder();
 					ret.setContractAddress(retNode.has("contractHash") ? retNode.get("contractHash").asText() : "");
 					ret.setRetCode(1);
 					ret.setRetMsg(retNode.has("retMsg") ? retNode.get("retMsg").asText() : "");
@@ -432,6 +440,7 @@ public class TransactionHelper implements ActorService {
 			}
 		}else{
 			log.warn("input or data is null");
+			ret.setRetMsg("create contract error: input or data is null");
 		}
 		
 		return ret;
@@ -443,8 +452,10 @@ public class TransactionHelper implements ActorService {
 	 */
 	public RespCreateTransaction.Builder doContract(ReqDoContractTransaction pb) {
 		// 执行合约走的是创建交易的流程，所以结构需要与创建交易保持一致，参与合约的地址为 input，合约地址为 output
-		pb.getTransaction().toBuilder().getTxBody().toBuilder().setType(TransTypeEnum.TYPE_CallContract.value());
-		RespCreateTransaction.Builder ret = createTransaction(pb.getTransaction());
+		MultiTransactionImpl.Builder  trans = pb.getTransaction().toBuilder();
+		trans.setTxBody(trans.getTxBody().toBuilder().setType(TransTypeEnum.TYPE_CallContract.value()));
+		
+		RespCreateTransaction.Builder ret = createTransaction(trans.build());
 
 		return ret;
 	}
