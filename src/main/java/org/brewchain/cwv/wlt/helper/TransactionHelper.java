@@ -138,7 +138,6 @@ public class TransactionHelper implements ActorService {
 					oBody.addOutputs(oOutput);
 				}
 				
-				Map<String, String> keys = new HashMap<String, String>();
 				for(MultiTransactionInputImpl reqInputImpl : reqInputsImpl){
 					String reqAddress = reqInputImpl.getAddress();
 					BigDecimal reqAmount =StringUtils.isEmpty(reqInputImpl.getAmount())? new BigDecimal("0") : ws.multiply(new BigDecimal(reqInputImpl.getAmount()));
@@ -147,7 +146,6 @@ public class TransactionHelper implements ActorService {
 					int reqFee = reqInputImpl.getFee();
 					int reqFeeLimit = reqInputImpl.getFeeLimit();
 					int reqNonce = reqInputImpl.getNonce();
-					String reqPubKey = reqInputImpl.getPubKey();
 					String reqSymbol = reqInputImpl.getSymbol();
 					String reqToken = reqInputImpl.getToken();
 					
@@ -174,7 +172,6 @@ public class TransactionHelper implements ActorService {
 					oInput.setFee(reqFee);
 					oInput.setFeeLimit(reqFeeLimit);
 					oInput.setNonce(reqNonce);
-					oInput.setPubKey(ByteString.copyFrom(encApi.hexDec(addressEntity.getPublicKey())));
 					if(StringUtils.isNoneBlank(reqSymbol, reqCryptoToken)){
 						oInput.setSymbol(reqSymbol);
 						oInput.setCryptoToken(ByteString.copyFrom(encApi.hexDec(reqCryptoToken)));
@@ -193,7 +190,6 @@ public class TransactionHelper implements ActorService {
 					}
 					oBody.addInputs(oInput);
 					
-					keys.put(reqPubKey, addressEntity.getPublicKey());
 				}
 				
 				if(StringUtils.isNotBlank(reqBodyImpl.getExdata())){
@@ -223,7 +219,6 @@ public class TransactionHelper implements ActorService {
 				pub = addressEntity.getPublicKey();
 				String pri = addressEntity.getPrivateKey();
 				oMultiTransactionSignature21 = MultiTransactionSignature.newBuilder();
-				oMultiTransactionSignature21.setPubKey(ByteString.copyFrom(encApi.hexDec(pub)));
 				
 				byte[] sign = encApi.ecSign(pri, oBody.build().toByteArray());
 				log.debug("signature is :--->"+encApi.hexEnc(sign));
@@ -381,7 +376,6 @@ public class TransactionHelper implements ActorService {
 			
 			// 签名
 			MultiTransactionSignature.Builder oMultiTransactionSignature21 = MultiTransactionSignature.newBuilder();
-			oMultiTransactionSignature21.setPubKey(ByteString.copyFrom(encApi.hexDec(addressEntity.getPublicKey())));
 			oMultiTransactionSignature21.setSignature(
 					ByteString.copyFrom(encApi.ecSign(addressEntity.getPrivateKey(), oMultiTransactionBody.build().toByteArray())));
 			oMultiTransactionBody.addSignatures(oMultiTransactionSignature21);
@@ -566,7 +560,6 @@ public class TransactionHelper implements ActorService {
 		inputB.setFee(input.has("fee") ? input.get("fee").asInt() : 0);
 		inputB.setFeeLimit(input.has("feeLimit") ? input.get("feeLimit").asInt() : 0);
 		inputB.setNonce(input.has("nonce") ? input.get("nonce").asInt() : 0);
-		inputB.setPubKey(input.has("pubKey") ? input.get("pubKey").asText() : "");
 		inputB.setSymbol(input.has("symbol") ? input.get("symbol").asText() : "");
 		inputB.setToken(input.has("token") ? input.get("token").asText() : "");
 		
@@ -684,7 +677,6 @@ public class TransactionHelper implements ActorService {
 			oMultiTransactionInputImpl.setCryptoToken(encApi.hexEnc(input.getCryptoToken().toByteArray()));
 			oMultiTransactionInputImpl.setFee(input.getFee());
 			oMultiTransactionInputImpl.setNonce(input.getNonce());
-			oMultiTransactionInputImpl.setPubKey(encApi.hexEnc(input.getPubKey().toByteArray()));
 			oMultiTransactionInputImpl.setSymbol(input.getSymbol());
 			oMultiTransactionInputImpl.setToken(input.getToken());
 			oMultiTransactionBodyImpl.addInputs(oMultiTransactionInputImpl);
@@ -701,7 +693,6 @@ public class TransactionHelper implements ActorService {
 		for (MultiTransactionSignature signature : oMultiTransactionBody.getSignaturesList()) {
 			MultiTransactionSignatureImpl.Builder oMultiTransactionSignatureImpl = MultiTransactionSignatureImpl
 					.newBuilder();
-			oMultiTransactionSignatureImpl.setPubKey(encApi.hexEnc(signature.getPubKey().toByteArray()));
 			oMultiTransactionSignatureImpl.setSignature(encApi.hexEnc(signature.getSignature().toByteArray()));
 			oMultiTransactionBodyImpl.addSignatures(oMultiTransactionSignatureImpl);
 		}
@@ -732,7 +723,6 @@ public class TransactionHelper implements ActorService {
 			oMultiTransactionInput.setCryptoToken(ByteString.copyFrom(encApi.hexDec(input.getCryptoToken())));
 			oMultiTransactionInput.setFee(input.getFee());
 			oMultiTransactionInput.setNonce(input.getNonce());
-			oMultiTransactionInput.setPubKey(ByteString.copyFrom(encApi.hexDec(input.getPubKey())));
 			oMultiTransactionInput.setSymbol(input.getSymbol());
 			oMultiTransactionInput.setToken(input.getToken());
 			oMultiTransactionBody.addInputs(oMultiTransactionInput);
@@ -748,7 +738,6 @@ public class TransactionHelper implements ActorService {
 		// oMultiTransactionBodyImpl.setSignatures(index, value)
 		for (MultiTransactionSignatureImpl signature : oMultiTransactionBodyImpl.getSignaturesList()) {
 			MultiTransactionSignature.Builder oMultiTransactionSignature = MultiTransactionSignature.newBuilder();
-			oMultiTransactionSignature.setPubKey(ByteString.copyFrom(encApi.hexDec(signature.getPubKey())));
 			oMultiTransactionSignature.setSignature(ByteString.copyFrom(encApi.hexDec(signature.getSignature())));
 			oMultiTransactionBody.addSignatures(oMultiTransactionSignature);
 		}
