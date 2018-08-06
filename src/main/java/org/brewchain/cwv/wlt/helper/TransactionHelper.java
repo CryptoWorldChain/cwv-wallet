@@ -169,8 +169,6 @@ public class TransactionHelper implements ActorService {
 					}else{
 						oInput.setToken("");
 					}
-					oInput.setFee(reqFee);
-					oInput.setFeeLimit(reqFeeLimit);
 					oInput.setNonce(reqNonce);
 					if(StringUtils.isNoneBlank(reqSymbol, reqCryptoToken)){
 						oInput.setSymbol(reqSymbol);
@@ -203,8 +201,10 @@ public class TransactionHelper implements ActorService {
 				}
 				
 				if(StringUtils.isNotBlank(reqBodyImpl.getData())){
-					//如果 data 不为空， 说明是创建合约交易
-					oBody.setData(ByteString.copyFromUtf8(reqBodyImpl.getData()));
+					//如果 data 不为空， 说明是创建合约交易 修改执行合约bug
+//					oBody.setData(ByteString.copyFromUtf8(reqBodyImpl.getData()));
+					oBody.setData(ByteString.copyFrom(encApi.hexDec(reqBodyImpl.getData())));
+					
 				}
 				
 				oBody.setTimestamp(System.currentTimeMillis());
