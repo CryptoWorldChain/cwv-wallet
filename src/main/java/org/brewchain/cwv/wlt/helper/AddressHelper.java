@@ -122,6 +122,11 @@ public class AddressHelper implements ActorService {
 			CWVWltParameter parameter = (CWVWltParameter)parameterObj;
 			FramePacket fposttx = PacketHelper.buildUrlFromJson(sendJson, "POST", parameter.getParamValue());
 			val txretReg = sender.send(fposttx, 30000);
+			
+			if(txretReg.getBody() == null) {
+				log.warn("chain return data is null " );
+				return account;
+			}
 			JsonNode retNode = null;
 			ObjectMapper mapper = new ObjectMapper();
 			try{

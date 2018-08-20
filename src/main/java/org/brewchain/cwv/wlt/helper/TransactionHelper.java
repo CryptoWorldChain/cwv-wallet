@@ -2,8 +2,6 @@ package org.brewchain.cwv.wlt.helper;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +19,8 @@ import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltParameterExample;
 import org.brewchain.cwv.wlt.dbgens.wlt.entity.CWVWltTx;
 import org.brewchain.cwv.wlt.enums.TransTypeEnum;
 import org.brewchain.cwv.wlt.utils.ByteUtil;
+import org.brewchain.evmapi.gens.Block.BlockEntity;
+import org.brewchain.wallet.service.Wallet.BlockMinerImpl;
 import org.brewchain.wallet.service.Wallet.MultiTransaction;
 import org.brewchain.wallet.service.Wallet.MultiTransactionBody;
 import org.brewchain.wallet.service.Wallet.MultiTransactionBodyImpl;
@@ -35,6 +35,8 @@ import org.brewchain.wallet.service.Wallet.MultiTransactionSignatureImpl;
 import org.brewchain.wallet.service.Wallet.ReqCreateContractTransaction;
 import org.brewchain.wallet.service.Wallet.ReqCreateMultiTransaction;
 import org.brewchain.wallet.service.Wallet.ReqDoContractTransaction;
+import org.brewchain.wallet.service.Wallet.RespBlockDetail;
+import org.brewchain.wallet.service.Wallet.RespBlockDetail.Builder;
 import org.brewchain.wallet.service.Wallet.RespCreateContractTransaction;
 import org.brewchain.wallet.service.Wallet.RespCreateTransaction;
 import org.brewchain.wallet.service.Wallet.RespGetTxByHash;
@@ -89,6 +91,8 @@ public class TransactionHelper implements ActorService {
 	private static String CREATE_CONTRACT = "createContractURL";
 	private static String QUERY_TRANSACTION = "queryTransaction";
 
+	private static String QUERY_LASTBLOCK = "queryLastBlock";
+
 	/**
 	 * 创建交易
 	 * 
@@ -107,181 +111,185 @@ public class TransactionHelper implements ActorService {
 		 * 发送
 		 */
 		RespCreateTransaction.Builder ret = RespCreateTransaction.newBuilder();
-		if(reqTransaction.getTxBody() != null){
-			MultiTransactionBodyImpl reqBodyImpl = reqTransaction.getTxBody();
-			if(reqBodyImpl.getInputsList() != null && !reqBodyImpl.getInputsList().isEmpty() && reqBodyImpl.getOutputsList() != null && !reqBodyImpl.getOutputsList().isEmpty()){
-				MultiTransaction.Builder oTransaction = MultiTransaction.newBuilder();
-				MultiTransactionBody.Builder oBody = MultiTransactionBody.newBuilder();
-				//构建 oBody
-				
-				List<MultiTransactionInputImpl> reqInputsImpl = reqBodyImpl.getInputsList();
-				List<MultiTransactionOutputImpl> reqOutputsImpl = reqBodyImpl.getOutputsList();
-				int reqType = 0;
-				for(MultiTransactionOutputImpl reqOutputImpl : reqOutputsImpl){
-					String reqAddress = reqOutputImpl.getAddress();
-					BigDecimal reqAmount = StringUtils.isEmpty(reqOutputImpl.getAmount()) ? new BigDecimal("0") : ws.multiply(new BigDecimal(reqOutputImpl.getAmount()));
-					log.debug("output's amount is :------------->"+ reqAmount.toBigInteger());
-					log.debug("");
-					String reqCryptoToken = reqOutputImpl.getCryptoToken();
-					String reqSymbol = reqOutputImpl.getSymbol();
-
-					
-					if(StringUtils.isBlank(reqAddress)){
-						return ret.setRetCode(-1).setRetMsg("output's address is nul");
-					}
-					
-					MultiTransactionOutput.Builder oOutput = MultiTransactionOutput.newBuilder();
-					oOutput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
-					oOutput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(reqAmount.toBigInteger())));
-					oOutput.setCryptoToken(StringUtils.isNotBlank(reqCryptoToken) ? ByteString.copyFrom(encApi.hexDec(reqCryptoToken)) : ByteString.EMPTY);
-					oOutput.setSymbol(StringUtils.isNotBlank(reqSymbol) ? reqSymbol : "");
-					oBody.addOutputs(oOutput);
-				}
-				
-				for(MultiTransactionInputImpl reqInputImpl : reqInputsImpl){
-					String reqAddress = reqInputImpl.getAddress();
-					BigDecimal reqAmount =StringUtils.isEmpty(reqInputImpl.getAmount())? new BigDecimal("0") : ws.multiply(new BigDecimal(reqInputImpl.getAmount()));
-					log.debug("input's amount is :------------->"+ reqAmount.toBigInteger());
-					String reqCryptoToken = reqInputImpl.getCryptoToken();
-					int reqFee = reqInputImpl.getFee();
-					int reqFeeLimit = reqInputImpl.getFeeLimit();
-					int reqNonce = reqInputImpl.getNonce();
-					String reqSymbol = reqInputImpl.getSymbol();
-					String reqToken = reqInputImpl.getToken();
-					
-					if(StringUtils.isBlank(reqAddress)){
-						return ret.setRetCode(-1).setRetMsg("input's address is nul");
-					}
-					
-					CWVWltAddress addressEntity = getAddress(reqAddress);
-					
-					MultiTransactionInput.Builder oInput = MultiTransactionInput.newBuilder();
-					oInput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
-					oInput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(reqAmount.toBigInteger())));
-					if(StringUtils.isNotBlank(reqToken)){
-						oInput.setToken(reqToken);
-						if(reqType==0){
-							reqType=TransTypeEnum.TYPE_TokenTransaction.value();
-							oBody.setType(TransTypeEnum.TYPE_TokenTransaction.value());
-						}else if(reqType==TransTypeEnum.TYPE_CryptoTokenTransaction.value()){
-							return ret.setRetCode(-1).setRetMsg("erc2.0 and erc721 can not send together");
-						}
-					}else{
-						oInput.setToken("");
-					}
-					oInput.setNonce(reqNonce);
-					if(StringUtils.isNoneBlank(reqSymbol, reqCryptoToken)){
-						oInput.setSymbol(reqSymbol);
-						oInput.setCryptoToken(ByteString.copyFrom(encApi.hexDec(reqCryptoToken)));
-						if(reqType==0){
-							reqType=TransTypeEnum.TYPE_CryptoTokenTransaction.value();
-							oBody.setType(TransTypeEnum.TYPE_CryptoTokenTransaction.value());
-						}else if(reqType==TransTypeEnum.TYPE_TokenTransaction.value()){
-							return ret.setRetCode(-1).setRetMsg("erc2.0 and erc721 can not send together");
-						}
-					}else{
-						oInput.setSymbol("");
-						oInput.setCryptoToken(ByteString.EMPTY);
-					}
-					if(reqBodyImpl.getType()!=0){
-						oBody.setType(reqBodyImpl.getType());
-					}
-					oBody.addInputs(oInput);
-					
-				}
-				
-				if(StringUtils.isNotBlank(reqBodyImpl.getExdata())){
-					oBody.setExdata(ByteString.copyFrom(encApi.hexDec(reqBodyImpl.getExdata())));
-				}
-				
-				if(reqBodyImpl.getDelegateList() != null && !reqBodyImpl.getDelegateList().isEmpty()){
-					for(String str : reqBodyImpl.getDelegateList()){
-						oBody.addDelegate(ByteString.copyFrom(encApi.hexDec(str)));
-					}
-				}
-				
-				if(StringUtils.isNotBlank(reqBodyImpl.getData())){
-					//如果 data 不为空， 说明是创建合约交易 修改执行合约bug
-//					oBody.setData(ByteString.copyFromUtf8(reqBodyImpl.getData()));
-					oBody.setData(ByteString.copyFrom(encApi.hexDec(reqBodyImpl.getData())));
-					
-				}
-				
-				oBody.setTimestamp(System.currentTimeMillis());
-				log.debug("signature param:--->"+new JsonFormat().printToString(oBody.build()));
-				String pub = "";
-				MultiTransactionSignature.Builder oMultiTransactionSignature21 = null;
-				//签名
-//				List<MultiTransactionSignature.Builder> signatures = new ArrayList<MultiTransactionSignature.Builder>();
-				MultiTransactionInputImpl reqInput = reqInputsImpl.get(0);
-				String reqAddress = reqInput.getAddress();
-				CWVWltAddress addressEntity = getAddress(reqAddress);
-				pub = addressEntity.getPublicKey();
-				String pri = addressEntity.getPrivateKey();
-				oMultiTransactionSignature21 = MultiTransactionSignature.newBuilder();
-				
-				byte[] sign = encApi.ecSign(pri, oBody.build().toByteArray());
-				log.debug("signature is :--->"+encApi.hexEnc(sign));
-				oMultiTransactionSignature21.setSignature(ByteString.copyFrom(sign));
-				
-				
-				boolean flag = encApi.ecVerify(pub, oBody.build().toByteArray(),sign);
-				log.debug("verify signatrue result:--->"+flag);
-//				signatures.add(oMultiTransactionSignature21);
-				
-				oBody.addSignatures(oMultiTransactionSignature21);
-				
-				oTransaction.setTxBody(oBody);
-				
-				ReqCreateMultiTransaction.Builder oCreate = ReqCreateMultiTransaction.newBuilder();
-				
-				MultiTransactionImpl.Builder oTransactionImpl = parseToImpl(oTransaction.build());
-				oCreate.setTransaction(oTransactionImpl);
-				
-				JsonFormat jsonFormat = new JsonFormat();
-				String jsonView = jsonFormat.printToString(oCreate.build());
-				CWVWltParameterExample parameterExample = new CWVWltParameterExample();
-				parameterExample.createCriteria().andParamCodeEqualTo(CREATE_TRANSACTION);
-				Object parameterObj = daos.wltParameterDao.selectOneByExample(parameterExample);
-				if(parameterObj != null){
-					CWVWltParameter parameter = (CWVWltParameter)parameterObj;
-					log.debug("send param ----------:"+jsonView);
-					FramePacket fposttx = PacketHelper.buildUrlFromJson(jsonView, "POST", parameter.getParamValue());
-					val qryTxRet = sender.send(fposttx, 30000);
-					JsonNode retNode = null;
-					try{
-						retNode = mapper.readTree(qryTxRet.getBody());
-					} catch (Exception e){
-						log.error("parse create transaction return error : " + e.getMessage());
-						
-					}
-					
-					if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){
-						ret = RespCreateTransaction.newBuilder();
-						ret.setTxHash(retNode.has("txHash") ? retNode.get("txHash").asText() : "");
-						ret.setRetCode(retNode.get("retCode").asInt());
-						ret.setRetMsg(retNode.has("retMsg") ? retNode.get("retMsg").asText() : "");
-						
-						if(retNode.has("txHash")){
-							insertTxHash(retNode.get("txHash").asText());
-						}
-					}else{
-						ret = RespCreateTransaction.newBuilder();
-						ret.setRetCode(retNode.get("retCode").asInt());
-						ret.setRetMsg(retNode.has("retMsg") ? retNode.get("retMsg").asText() : "");
-					}
-				}
-			}else{
-				ret = RespCreateTransaction.newBuilder();
-				ret.setRetCode(-1);
-				ret.setRetMsg("inputs or outputs is null");
-			}
-		}else{
-			ret = RespCreateTransaction.newBuilder();
+		if(reqTransaction.getTxBody() == null){
 			ret.setRetCode(-1);
 			ret.setRetMsg("tx body is null");
+			return ret;
+		}
+		
+		MultiTransactionBodyImpl reqBodyImpl = reqTransaction.getTxBody();
+		if(reqBodyImpl.getInputsList() == null || reqBodyImpl.getInputsList().isEmpty() ){
+			ret.setRetCode(-1);
+			ret.setRetMsg("inputs is null");
+			return ret;
 		}
 
+		MultiTransaction.Builder oTransaction = MultiTransaction.newBuilder();
+		MultiTransactionBody.Builder oBody = MultiTransactionBody.newBuilder();
+		//构建 oBody
+		
+		List<MultiTransactionInputImpl> reqInputsImpl = reqBodyImpl.getInputsList();
+		int reqType = 0;
+		
+		for(MultiTransactionInputImpl reqInputImpl : reqInputsImpl){
+			String reqAddress = reqInputImpl.getAddress();
+			BigDecimal reqAmount =StringUtils.isEmpty(reqInputImpl.getAmount())? new BigDecimal("0") : ws.multiply(new BigDecimal(reqInputImpl.getAmount()));
+			log.debug("input's amount is :------------->"+ reqAmount.toBigInteger());
+			String reqCryptoToken = reqInputImpl.getCryptoToken();
+			int reqFee = reqInputImpl.getFee();
+			int reqFeeLimit = reqInputImpl.getFeeLimit();
+			int reqNonce = reqInputImpl.getNonce();
+			String reqSymbol = reqInputImpl.getSymbol();
+			String reqToken = reqInputImpl.getToken();
+			
+			if(StringUtils.isBlank(reqAddress)){
+				return ret.setRetCode(-1).setRetMsg("input's address is nul");
+			}
+			
+			MultiTransactionInput.Builder oInput = MultiTransactionInput.newBuilder();
+			oInput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
+			oInput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(reqAmount.toBigInteger())));
+			if(StringUtils.isNotBlank(reqToken)){
+				oInput.setToken(reqToken);
+				if(reqType==0){
+					reqType=TransTypeEnum.TYPE_TokenTransaction.value();
+					oBody.setType(TransTypeEnum.TYPE_TokenTransaction.value());
+				}else if(reqType==TransTypeEnum.TYPE_CryptoTokenTransaction.value()){
+					return ret.setRetCode(-1).setRetMsg("erc2.0 and erc721 can not send together");
+				}
+			}else{
+				oInput.setToken("");
+			}
+			oInput.setNonce(reqNonce);
+			if(StringUtils.isNoneBlank(reqSymbol, reqCryptoToken)){
+				oInput.setSymbol(reqSymbol);
+				oInput.setCryptoToken(ByteString.copyFrom(encApi.hexDec(reqCryptoToken)));
+				if(reqType==0){
+					reqType=TransTypeEnum.TYPE_CryptoTokenTransaction.value();
+					oBody.setType(TransTypeEnum.TYPE_CryptoTokenTransaction.value());
+				}else if(reqType==TransTypeEnum.TYPE_TokenTransaction.value()){
+					return ret.setRetCode(-1).setRetMsg("erc2.0 and erc721 can not send together");
+				}
+			}else{
+				oInput.setSymbol("");
+				oInput.setCryptoToken(ByteString.EMPTY);
+			}
+			if(reqBodyImpl.getType()!=0){
+				oBody.setType(reqBodyImpl.getType());
+			}
+			oBody.addInputs(oInput);
+			
+		}
+		
+		if(reqBodyImpl.getOutputsList() != null && !reqBodyImpl.getOutputsList().isEmpty() ){
+			List<MultiTransactionOutputImpl> reqOutputsImpl = reqBodyImpl.getOutputsList();
+			
+			for(MultiTransactionOutputImpl reqOutputImpl : reqOutputsImpl){
+				String reqAddress = reqOutputImpl.getAddress();
+				BigDecimal reqAmount = StringUtils.isEmpty(reqOutputImpl.getAmount()) ? new BigDecimal("0") : ws.multiply(new BigDecimal(reqOutputImpl.getAmount()));
+				log.debug("output's amount is :------------->"+ reqAmount.toBigInteger());
+				log.debug("");
+				String reqCryptoToken = reqOutputImpl.getCryptoToken();
+				String reqSymbol = reqOutputImpl.getSymbol();
+
+				
+				if(StringUtils.isBlank(reqAddress)){
+					return ret.setRetCode(-1).setRetMsg("output's address is nul");
+				}
+				
+				MultiTransactionOutput.Builder oOutput = MultiTransactionOutput.newBuilder();
+				oOutput.setAddress(ByteString.copyFrom(encApi.hexDec(reqAddress)));
+				oOutput.setAmount(ByteString.copyFrom(ByteUtil.bigIntegerToBytes(reqAmount.toBigInteger())));
+				oOutput.setCryptoToken(StringUtils.isNotBlank(reqCryptoToken) ? ByteString.copyFrom(encApi.hexDec(reqCryptoToken)) : ByteString.EMPTY);
+				oOutput.setSymbol(StringUtils.isNotBlank(reqSymbol) ? reqSymbol : "");
+				oBody.addOutputs(oOutput);
+			}
+			
+		} else {
+			//创建房产
+			oBody.setType(TransTypeEnum.TYPE_CreateCryptoToken.value());
+		}
+		
+		if(StringUtils.isNotBlank(reqBodyImpl.getData())){
+			//如果 data 不为空， 说明是创建合约交易 修改执行合约bug
+//			oBody.setData(ByteString.copyFromUtf8(reqBodyImpl.getData()));
+			oBody.setData(ByteString.copyFrom(encApi.hexDec(reqBodyImpl.getData())));
+			
+		}
+		
+		if(StringUtils.isNotBlank(reqBodyImpl.getExdata())){
+			oBody.setExdata(ByteString.copyFrom(encApi.hexDec(reqBodyImpl.getExdata())));
+		}
+		
+		if(reqBodyImpl.getDelegateList() != null && !reqBodyImpl.getDelegateList().isEmpty()){
+			for(String str : reqBodyImpl.getDelegateList()){
+				oBody.addDelegate(ByteString.copyFrom(encApi.hexDec(str)));
+			}
+		}
+		
+		oBody.setTimestamp(System.currentTimeMillis());
+		log.debug("signature param:--->"+new JsonFormat().printToString(oBody.build()));
+		String pub = "";
+		MultiTransactionSignature.Builder oMultiTransactionSignature21 = null;
+		//签名
+//		List<MultiTransactionSignature.Builder> signatures = new ArrayList<MultiTransactionSignature.Builder>();
+		MultiTransactionInputImpl reqInput = reqInputsImpl.get(0);
+		String reqAddress = reqInput.getAddress();
+		CWVWltAddress addressEntity = getAddress(reqAddress);
+		pub = addressEntity.getPublicKey();
+		String pri = addressEntity.getPrivateKey();
+		oMultiTransactionSignature21 = MultiTransactionSignature.newBuilder();
+		
+		byte[] sign = encApi.ecSign(pri, oBody.build().toByteArray());
+		log.debug("signature is :--->"+encApi.hexEnc(sign));
+		oMultiTransactionSignature21.setSignature(ByteString.copyFrom(sign));
+		
+		
+		boolean flag = encApi.ecVerify(pub, oBody.build().toByteArray(),sign);
+		log.debug("verify signatrue result:--->"+flag);
+//		signatures.add(oMultiTransactionSignature21);
+		
+		oBody.addSignatures(oMultiTransactionSignature21);
+		
+		oTransaction.setTxBody(oBody);
+		
+		ReqCreateMultiTransaction.Builder oCreate = ReqCreateMultiTransaction.newBuilder();
+		
+		MultiTransactionImpl.Builder oTransactionImpl = parseToImpl(oTransaction.build());
+		oCreate.setTransaction(oTransactionImpl);
+		
+		JsonFormat jsonFormat = new JsonFormat();
+		String jsonView = jsonFormat.printToString(oCreate.build());
+		CWVWltParameterExample parameterExample = new CWVWltParameterExample();
+		parameterExample.createCriteria().andParamCodeEqualTo(CREATE_TRANSACTION);
+		Object parameterObj = daos.wltParameterDao.selectOneByExample(parameterExample);
+		if(parameterObj != null){
+			CWVWltParameter parameter = (CWVWltParameter)parameterObj;
+			log.debug("send param ----------:"+jsonView);
+			FramePacket fposttx = PacketHelper.buildUrlFromJson(jsonView, "POST", parameter.getParamValue());
+			val qryTxRet = sender.send(fposttx, 30000);
+			if(qryTxRet.getBody() == null){
+				log.warn("chain return data is null " );
+				return ret.setRetCode(-2).setRetMsg("chain return data is null");
+			}
+			JsonNode retNode = null;
+			try{
+				retNode = mapper.readTree(qryTxRet.getBody());
+			} catch (Exception e){
+				log.error("parse create transaction return error : " + e.getMessage());
+				return ret.setRetCode(-2).setRetMsg("chain return data is null");
+			}
+			ret.setRetCode(retNode.has("retCode") ? retNode.get("retCode").asInt() : -1);
+			ret.setRetMsg(retNode.has("retMsg") ? retNode.get("retMsg").asText() : "");
+			
+			if(retNode != null && ret.getRetCode() == 1){
+				ret.setTxHash(retNode.has("txHash") ? retNode.get("txHash").asText() : "");
+				if(retNode.has("txHash")){
+					insertTxHash(retNode.get("txHash").asText());
+				}
+			}
+		}
+	
 		return ret;
 	}
 	
@@ -294,9 +302,9 @@ public class TransactionHelper implements ActorService {
 	 */
 	@SuppressWarnings("static-access")
 	public RespGetTxByHash.Builder queryTransactionByTxHash(String txHash) {
-		RespGetTxByHash.Builder ret = null;
+		RespGetTxByHash.Builder ret = RespGetTxByHash.newBuilder();
 		Map<String, Object> param = new HashMap<String, Object>();
-		param.put("hexTxHash", txHash);
+		param.put("hash", txHash);
 
 		String sendJson = JsonSerializer.getInstance().formatToString(param);
 		CWVWltParameterExample parameterExample = new CWVWltParameterExample();
@@ -306,12 +314,17 @@ public class TransactionHelper implements ActorService {
 			CWVWltParameter parameter = (CWVWltParameter)parameterObj;
 			FramePacket fposttx = PacketHelper.buildUrlFromJson(sendJson, "POST", parameter.getParamValue());
 			val qryTxRet = sender.send(fposttx, 30000);
+			if(qryTxRet.getBody() == null) {
+				log.warn("chain return data is null " );
+				return ret.setRetCode(-2).setRetMsg("chain return data is null ");
+			}
 			
 			JsonNode retNode = null;
 			try{
 				retNode = mapper.readTree(qryTxRet.getBody());
 			} catch(Exception e){
 				log.error("parse query transaction error : " + e.getMessage());
+				return ret.setRetCode(-2).setRetMsg("parse query transaction error" );
 			}
 			
 			if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){
@@ -411,21 +424,24 @@ public class TransactionHelper implements ActorService {
 				CWVWltParameter parameter = (CWVWltParameter)parameterObj;
 				FramePacket fposttx = PacketHelper.buildUrlFromJson(jsonView, "POST", parameter.getParamValue());
 				val crtTxRet = sender.send(fposttx, 30000);
+				if(crtTxRet.getBody() == null ) {
+					log.warn("chain return data is null " );
+					return ret.setRetCode(-1).setRetMsg("chain return data is null");
+				}
 				
 				JsonNode retNode = null;
 				try {
 					retNode = mapper.readTree(crtTxRet.getBody());
 				} catch (IOException e) {
 					log.error("parse ret error : " + new String(crtTxRet.getBody()));
-					ret.setRetMsg("parse ret error : "+new String(crtTxRet.getBody()));
+					return ret.setRetCode(-1).setRetMsg("parse ret error : "+new String(crtTxRet.getBody()));
 				}
+				ret.setRetCode(retNode.has("retCode") ? retNode.get("retCode").asInt() : -1);
+				ret.setRetMsg(retNode.has("retMsg") ? retNode.get("retMsg").asText() : "");
 				
-				if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){
+				if(retNode != null && ret.getRetCode() == 1){
 					ret.setContractAddress(retNode.has("contractHash") ? retNode.get("contractHash").asText() : "");
-					ret.setRetCode(1);
-					ret.setRetMsg(retNode.has("retMsg") ? retNode.get("retMsg").asText() : "");
 					ret.setTxHash(retNode.has("txHash") ? retNode.get("txHash").asText() : "");
-					
 					if(retNode.has("contractHash")){
 						insertContract(retNode.get("contractHash").asText(), retNode.get("txHash").asText());
 					}
@@ -434,7 +450,7 @@ public class TransactionHelper implements ActorService {
 			}
 		}else{
 			log.warn("input or data is null");
-			ret.setRetMsg("create contract error: input or data is null");
+			return ret.setRetCode(-1).setRetMsg("create contract error: input or data is null");
 		}
 		
 		return ret;
@@ -744,5 +760,39 @@ public class TransactionHelper implements ActorService {
 		oMultiTransactionBody.setTimestamp(oMultiTransactionBodyImpl.getTimestamp());
 		oMultiTransaction.setTxBody(oMultiTransactionBody);
 		return oMultiTransaction;
+	}
+
+
+	public Builder queryLastBlock() {
+		RespBlockDetail.Builder ret = RespBlockDetail.newBuilder();
+		CWVWltParameterExample parameterExample = new CWVWltParameterExample();
+		parameterExample.createCriteria().andParamCodeEqualTo(QUERY_TRANSACTION);
+		Object parameterObj = daos.wltParameterDao.selectOneByExample(parameterExample);
+		if(parameterObj != null){
+			CWVWltParameter parameter = (CWVWltParameter)parameterObj;
+			FramePacket fposttx = PacketHelper.buildUrlForGet(parameter.getParamValue());
+			val qryTxRet = sender.send(fposttx, 30000);
+			if(qryTxRet.getBody() == null) {
+				return ret.setRetCode(-2);
+			}
+			JsonNode retNode = null;
+			try{
+				retNode = mapper.readTree(qryTxRet.getBody());
+			} catch(Exception e){
+				log.error("parse query transaction error : " + e.getMessage());
+			}
+			
+			if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){
+				ret = parseJson2RespBlockDetail(retNode);
+			}
+		}
+		return ret;
+		
+	}
+
+
+	private Builder parseJson2RespBlockDetail(JsonNode retNode) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
