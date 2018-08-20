@@ -766,7 +766,7 @@ public class TransactionHelper implements ActorService {
 	public Builder queryLastBlock() {
 		RespBlockDetail.Builder ret = RespBlockDetail.newBuilder();
 		CWVWltParameterExample parameterExample = new CWVWltParameterExample();
-		parameterExample.createCriteria().andParamCodeEqualTo(QUERY_TRANSACTION);
+		parameterExample.createCriteria().andParamCodeEqualTo(QUERY_LASTBLOCK);
 		Object parameterObj = daos.wltParameterDao.selectOneByExample(parameterExample);
 		if(parameterObj != null){
 			CWVWltParameter parameter = (CWVWltParameter)parameterObj;
@@ -790,9 +790,43 @@ public class TransactionHelper implements ActorService {
 		
 	}
 
-
+	/**
+	 * 
+	 * @param retNode
+	 * @return
+	 */
 	private Builder parseJson2RespBlockDetail(JsonNode retNode) {
-		// TODO Auto-generated method stub
-		return null;
+		RespBlockDetail.Builder ret = RespBlockDetail.newBuilder();
+		ret.setParentHash(retNode.has("parentHash") ? retNode.get("parentHash").asText() : "");
+		ret.setTimestamp(retNode.has("timestamp") ? retNode.get("timestamp").asLong() : 0);
+		ret.setBlockHash(retNode.has("blockHash") ? retNode.get("blockHash").asText() : "");
+		ret.setSliceId(retNode.has("sliceId") ? retNode.get("sliceId").asInt() : 0);
+		ret.setStateRoot(retNode.has("stateRoot") ? retNode.get("stateRoot").asText() : "");
+		ret.setNumber(retNode.has("number") ? retNode.get("number").asLong() : 0);
+		if(retNode.has("miner")) {
+			BlockMinerImpl.Builder miner = BlockMinerImpl.newBuilder();
+			JsonNode minerNode = retNode.get("miner");
+			miner.setNode(minerNode.has("node")? minerNode.get("node").asText() : "")
+			.setReward(minerNode.has("reward")? minerNode.get("reward").asText() : "")
+			.setAddress(minerNode.has("address")? minerNode.get("address").asText() : "")
+			.setBcuid(minerNode.has("bcuid")? minerNode.get("bcuid").asText() : "");
+			
+		}
+//		{
+//	    "retCode": 1,
+//	    "parentHash": "7b197e65bdc0e35a2ec3b9b7161bee30fd8929da2b8c098c27e7f8527014f4fb",
+//	    "timestamp": 1534761971933,
+//	    "number": 168448,
+//	    "miner": {
+//	        "node": "F91n6Dm1ynhN3HcAg5Srz3mdct0",
+//	        "reward": "3170979198376459000",
+//	        "address": "33cc7aba10aed1c8b8224f9abe5ff10cfbd493b3",
+//	        "bcuid": "DF91n6Dm1ynhN3HcAg5Srz3mdct0"
+//	    },
+//	    "blockHash": "7fde1c20a6a887becaab38ba09be3944ee95cfcc5940c999c51ea8df418889b2",
+//	    "sliceId": 0,
+//	    "stateRoot": "4706de436b83ec823a59b087ca77eb4cb08c9e8942060e9b76346efc6198bc99"
+//	}
+		return ret.setRetCode(retNode.get("retCode").asInt());
 	}
 }

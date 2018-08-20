@@ -107,12 +107,17 @@ public class AddressHelper implements ActorService {
 	 * query address
 	 * 
 	 * @param address
+	 * @param p 
+	 * @param s 
 	 * @return
 	 */
-	public RespGetAccount.Builder queryAddressInfo(String address) {
+	public RespGetAccount.Builder queryAddressInfo(String address, int s, int p) {
 		RespGetAccount.Builder account = null;
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("address", address);
+		params.put("s", s);
+		params.put("p", p);
+		
 		String sendJson = JsonSerializer.formatToString(params);
 
 		CWVWltParameterExample parameterExample = new CWVWltParameterExample();

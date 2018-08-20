@@ -39,6 +39,8 @@ message RetNewAddress{//创建地址返回
 message ReqGetAccount {//查询地址请求
     string address = 1;//地址 
     string type =2;//类型（为以后对接ETH作准备）
+    int32 s = 3;//pageSize
+    int32 p = 4;//pageIndex
 };
 
 message RespGetAccount {//查询地址返回

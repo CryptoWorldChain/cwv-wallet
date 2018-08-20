@@ -61,8 +61,10 @@ public class QueryAddress extends SessionModules<BaseData>{
 					if(decryptData != null){
 						JsonNode node = new ObjectMapper().readTree(decryptData);
 						String address = node.get("address").asText();
+						int s = node.get("s").asInt();
+						int p = node.get("p").asInt();
 						if(StringUtils.isNotBlank(address)){
-							ret = addressHelper.queryAddressInfo(address);
+							ret = addressHelper.queryAddressInfo(address,s,p);
 							
 							if(ret == null){
 								ret = RespGetAccount.newBuilder();
