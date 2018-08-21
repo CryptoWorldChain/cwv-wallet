@@ -123,14 +123,20 @@ public class AddressHelper implements ActorService {
 		CWVWltParameterExample parameterExample = new CWVWltParameterExample();
 		parameterExample.createCriteria().andParamCodeEqualTo(QUERY_ADDRESS);
 		Object parameterObj = daos.wltParameterDao.selectOneByExample(parameterExample);
-		if(parameterObj != null){
-			CWVWltParameter parameter = (CWVWltParameter)parameterObj;
-			FramePacket fposttx = PacketHelper.buildUrlFromJson(sendJson, "POST", parameter.getParamValue());
+		if(parameterObj == null){
+			return null;
+		}
+		
+		CWVWltParameter parameter = (CWVWltParameter)parameterObj;
+		
+		String[] nodes = this.getNodeList();
+		for(String node : nodes) {
+			FramePacket fposttx = PacketHelper.buildUrlFromJson(sendJson, "POST", node + parameter.getParamValue());
 			val txretReg = sender.send(fposttx, 30000);
 			
 			if(txretReg.getBody() == null) {
 				log.warn("chain return data is null " );
-				return account;
+				continue ;
 			}
 			JsonNode retNode = null;
 			ObjectMapper mapper = new ObjectMapper();
@@ -138,11 +144,13 @@ public class AddressHelper implements ActorService {
 				retNode = mapper.readTree(txretReg.getBody());
 			} catch (Exception e){
 				log.error("parse query address error : " + e.getMessage());
+				continue ;
 			}
 			
 			if(retNode != null && retNode.has("retCode") && retNode.get("retCode").asInt() == 1){
 				account = parseJson2AccountValueImpl(retNode);
 			}
+			break ;
 		}
 		
 		return account;
@@ -224,5 +232,17 @@ public class AddressHelper implements ActorService {
 		}
 		
 		return ret;
+	}
+	
+	/**
+	 * 获取节点集合
+	 * 
+	 * @return
+	 */
+	private String[] getNodeList() {
+		CWVWltParameterExample parameterExample = new CWVWltParameterExample();
+		parameterExample.createCriteria().andParamCodeEqualTo("chain_node_list");
+		Object parameterObj = daos.wltParameterDao.selectOneByExample(parameterExample);
+		return parameterObj == null ? null : ((CWVWltParameter) parameterObj).getParamValue().split(",");
 	}
 }

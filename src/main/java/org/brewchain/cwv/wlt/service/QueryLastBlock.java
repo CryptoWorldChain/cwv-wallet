@@ -15,6 +15,7 @@ import org.brewchain.wallet.service.Wallet.PWLTCommand;
 import org.brewchain.wallet.service.Wallet.PWLTModule;
 import org.brewchain.wallet.service.Wallet.ReqGetTxByHash;
 import org.brewchain.wallet.service.Wallet.RespBlockDetail;
+import org.brewchain.wallet.service.Wallet.RespGetAccount;
 import org.brewchain.wallet.service.Wallet.RespGetTxByHash;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -53,7 +54,14 @@ public class QueryLastBlock extends SessionModules<BaseData>{
 	@Override
 	public void onPBPacket(final FramePacket pack, final BaseData pb, final CompleteHandler handler) {
 		RespBlockDetail.Builder ret = null;
-		ret = txHelper.queryLastBlock();
+		try {
+			ret = txHelper.queryLastBlock();
+		} catch (Exception e) {
+			log.error("get last block error : " + e.getMessage());
+			ret = RespBlockDetail.newBuilder();
+			ret.setRetCode(-1).setRetMsg("get last block error");
+		}
+		
 		handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()));
 	}
 }
